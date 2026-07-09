@@ -1,0 +1,15 @@
+[
+  {
+    "ParameterKey": "ProjectName",
+    "ParameterValue": "habitum"
+  },
+  {
+    "ParameterKey": "Environment",
+    "ParameterValue": "dev"
+  },
+  {
+    "ParameterKey": "CorsAllowOrigin",
+    "ParameterValue": "*"
+  }
+]
+

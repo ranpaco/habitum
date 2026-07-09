@@ -1,0 +1,273 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Habitum backend MVP infrastructure for demo, onboarding, uploads, and dashboard.
+
+Parameters:
+  ProjectName:
+    Type: String
+    Default: habitum
+    AllowedPattern: "^[a-z0-9-]+$"
+  Environment:
+    Type: String
+    Default: dev
+    AllowedPattern: "^[a-z0-9-]+$"
+  BackendCodeS3Bucket:
+    Type: String
+    Description: S3 bucket containing the Lambda zip artifact.
+  BackendCodeS3Key:
+    Type: String
+    Description: S3 key for the Lambda zip artifact.
+  CorsAllowOrigin:
+    Type: String
+    Default: "*"
+  BedrockModelId:
+    Type: String
+    Default: disabled
+    Description: Optional Amazon Bedrock model ID for OCR text structured extraction.
+
+Resources:
+  UploadsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${ProjectName}-${Environment}-uploads-${AWS::AccountId}-${AWS::Region}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+          - AllowedOrigins:
+              - !Ref CorsAllowOrigin
+            AllowedMethods:
+              - PUT
+              - GET
+              - HEAD
+            AllowedHeaders:
+              - "*"
+            MaxAge: 300
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireDemoUploads
+            Status: Enabled
+            ExpirationInDays: 30
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 7
+
+  DemoRequestsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${ProjectName}-${Environment}-demo-requests"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+
+  OnboardingSessionsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${ProjectName}-${Environment}-onboarding-sessions"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+
+  CommunitiesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${ProjectName}-${Environment}-communities"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+
+  UploadedFilesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${ProjectName}-${Environment}-uploaded-files"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+
+  ProcessingJobsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub "${ProjectName}-${Environment}-processing-jobs"
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      SSESpecification:
+        SSEEnabled: true
+
+  BackendLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${ProjectName}-${Environment}-api"
+      RetentionInDays: 14
+
+  BackendRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${ProjectName}-${Environment}-api-role"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: !Sub "${ProjectName}-${Environment}-api-policy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "${BackendLogGroup.Arn}:*"
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                  - dynamodb:Scan
+                Resource:
+                  - !GetAtt DemoRequestsTable.Arn
+                  - !GetAtt OnboardingSessionsTable.Arn
+                  - !GetAtt CommunitiesTable.Arn
+                  - !GetAtt UploadedFilesTable.Arn
+                  - !GetAtt ProcessingJobsTable.Arn
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub "${UploadsBucket.Arn}/*"
+              - Effect: Allow
+                Action:
+                  - textract:DetectDocumentText
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                Resource: "*"
+
+  BackendFunction:
+    Type: AWS::Lambda::Function
+    DependsOn:
+      - BackendLogGroup
+    Properties:
+      FunctionName: !Sub "${ProjectName}-${Environment}-api"
+      Runtime: nodejs20.x
+      Handler: index.handler
+      Role: !GetAtt BackendRole.Arn
+      Timeout: 30
+      MemorySize: 256
+      Code:
+        S3Bucket: !Ref BackendCodeS3Bucket
+        S3Key: !Ref BackendCodeS3Key
+      Environment:
+        Variables:
+          CORS_ALLOW_ORIGIN: !Ref CorsAllowOrigin
+          UPLOADS_BUCKET: !Ref UploadsBucket
+          DEMO_REQUESTS_TABLE: !Ref DemoRequestsTable
+          ONBOARDING_SESSIONS_TABLE: !Ref OnboardingSessionsTable
+          COMMUNITIES_TABLE: !Ref CommunitiesTable
+          UPLOADED_FILES_TABLE: !Ref UploadedFilesTable
+          PROCESSING_JOBS_TABLE: !Ref ProcessingJobsTable
+          BEDROCK_MODEL_ID: !Ref BedrockModelId
+
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub "${ProjectName}-${Environment}-api"
+      ProtocolType: HTTP
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref CorsAllowOrigin
+        AllowMethods:
+          - GET
+          - POST
+          - PATCH
+          - PUT
+          - OPTIONS
+        AllowHeaders:
+          - content-type
+          - authorization
+        MaxAge: 300
+
+  BackendIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !GetAtt BackendFunction.Arn
+      PayloadFormatVersion: "2.0"
+
+  ApiProxyRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: "ANY /api/{proxy+}"
+      Target: !Sub "integrations/${BackendIntegration}"
+
+  ApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: "$default"
+      AutoDeploy: true
+
+  BackendInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref BackendFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*/*/api/*"
+
+Outputs:
+  ApiBaseUrl:
+    Description: HTTP API base URL for VITE_API_BASE_URL.
+    Value: !GetAtt HttpApi.ApiEndpoint
+  UploadsBucketName:
+    Description: Bucket for onboarding uploads.
+    Value: !Ref UploadsBucket
+  DemoRequestsTableName:
+    Value: !Ref DemoRequestsTable
+  OnboardingSessionsTableName:
+    Value: !Ref OnboardingSessionsTable
+  CommunitiesTableName:
+    Value: !Ref CommunitiesTable
+  BackendFunctionName:
+    Value: !Ref BackendFunction
