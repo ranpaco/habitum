@@ -2,22 +2,56 @@
 
 Este roadmap separa lo que existe hoy, lo que falta para un demo funcional y lo que falta para convertir el sitio en producto SaaS real.
 
+Actualizado: 2026-07-10.
+
 ## Estado Actual
 
 - Landing page comercial con secciones de problema, solucion, onboarding IA, features, pricing, FAQ y CTA.
 - Contenido regional LatAm/USA.
-- Formulario de demo con validacion local.
-- Onboarding simulado de tres pasos.
-- Carga local de archivos sin backend.
-- Procesamiento IA simulado.
-- Dashboard mock con metricas y acciones visuales.
+- Formulario de demo conectado a API dev (`POST /api/demo-requests`) con validacion local.
+- Onboarding de tres pasos conectado a backend MVP:
+  - creacion de sesion/comunidad;
+  - carga de archivos a S3 privado con presigned URLs;
+  - procesamiento real de CSV, XLSX, PDF, JPG y PNG.
+- OCR sincrono con Textract para PDF/JPG/PNG de hasta 5 MB.
+- Extraccion estructurada desde CSV/XLSX/OCR, con fallback LLM via Bedrock Converse usando `amazon.nova-micro-v1:0` en dev.
+- Pantalla de revision humana antes de confirmar la importacion; permite editar, agregar y eliminar filas.
+- Dashboard conectado a API cuando existe `communityId`, con fallback mock si no hay sesion o falla la carga.
+- Agente IA demo-grade para reglamentos/documentos subidos:
+  - OCR/chunking simple;
+  - busqueda lexical sin vector DB;
+  - respuestas con citas cuando hay evidencia;
+  - gate de alcance para bloquear preguntas fuera de la comunidad administrada.
+- Infra AWS dev documentada para API Gateway, Lambda, DynamoDB, S3, Textract, Bedrock y CloudFront/S3 web deploy.
+- Repositorio Git inicializado y publicado en `git@github.com:ranpaco/habitum.git`.
+
+## Siguiente Hito Recomendado
+
+Objetivo: dejar el MVP demo mas confiable antes de construir nuevas funcionalidades grandes.
+
+- Agregar GitHub Actions para validar `npm install` y `npm run build` en cada push/PR.
+- Revisar vulnerabilidades con `npm audit` en raiz y en `server/lambda/habitum-api/`.
+- Separar claramente datos reales, fallback demo y mocks visuales.
+- Mejorar estados de UX del demo:
+  - carga;
+  - error;
+  - reintento;
+  - confirmaciones de exito;
+  - mensajes cuando no hay `communityId`.
+- Hacer una prueba manual completa de rutas:
+  - `#`;
+  - `#demo`;
+  - `#onboarding`;
+  - `#dashboard`.
+- Documentar en README el flujo local completo, despliegue dev y limitaciones actuales del MVP.
 
 ## Prioridad 0: Orden Del Proyecto
 
-- Actualizar `README.md` para que describa Habitum, no el bundle original de Figma.
-- Decidir gestor oficial de paquetes: `npm`, `pnpm` o `yarn`. El repo tiene `pnpm-workspace.yaml`, pero el README menciona `npm`.
-- Inicializar Git si este directorio sera la fuente principal del proyecto.
-- Definir variables de entorno esperadas en un `.env.example`.
+- Actualizar `README.md` para que describa Habitum, no el bundle original de Figma. **Completado.**
+- Decidir gestor oficial de paquetes: `npm`, `pnpm` o `yarn`. **Decision actual: npm, porque existe `package-lock.json`. Pendiente: eliminar o justificar `pnpm-workspace.yaml`.**
+- Inicializar Git si este directorio sera la fuente principal del proyecto. **Completado: repo publicado en GitHub.**
+- Definir variables de entorno esperadas en un `.env.example`. **Completado para `VITE_API_BASE_URL`.**
+- Agregar CI basico con GitHub Actions para build de frontend.
 - Crear una convencion para datos mock, por ejemplo `src/app/mocks/`.
 - Mover textos comerciales hardcodeados a configuraciones regionales cuando aplique.
 - Definir si el idioma por defecto sera espanol, ingles o dependiente de region.
@@ -54,12 +88,12 @@ Avance actual:
 - Checklist inicial de documentos HOA/USA agregado a onboarding: governing documents, finanzas/assessments, owner roster, meetings/elections, insurance/contracts y compliance workflow.
 
 - Crear API para solicitud de demo:
-  - guardar nombre, email, telefono, pais, condominio, tamano y rol;
+  - guardar nombre, email, telefono, pais, condominio, tamano y rol; **MVP completado con DynamoDB**;
   - enviar notificacion interna;
   - enviar email de confirmacion al lead.
 - Crear API para onboarding demo:
-  - crear cuenta demo o sesion temporal;
-  - recibir metadata del condominio;
+  - crear cuenta demo o sesion temporal; **MVP completado como sesion temporal**;
+  - recibir metadata del condominio; **MVP completado**;
   - aceptar carga de Excel, PDF e imagenes; **MVP completado con S3 presigned URLs**;
   - almacenar archivos de forma segura; **MVP completado en S3 privado con lifecycle de 30 dias**.
 - Implementar procesamiento inicial:
@@ -73,14 +107,14 @@ Avance actual:
   - extraccion de reglamentos; **MVP completado con OCR + chunks simples**;
   - validacion humana o pantalla de revision antes de confirmar importacion; **MVP completado**.
 - Persistir resultados:
-  - comunidades/condominios;
-  - unidades;
-  - propietarios/residentes;
-  - saldos/deudas;
-  - documentos/reglamentos;
-  - eventos de importacion.
+  - comunidades/condominios; **MVP completado en DynamoDB**;
+  - unidades; **MVP completado como datos importados/revisados**;
+  - propietarios/residentes; **MVP completado como datos importados/revisados**;
+  - saldos/deudas; **MVP completado como datos importados/revisados**;
+  - documentos/reglamentos; **MVP completado como archivos + chunks simples de conocimiento**;
+  - eventos de importacion; **pendiente como auditoria formal**.
 - Reemplazar resultados mock de `Step3Processing.tsx` por datos reales de una respuesta de backend. **MVP completado para CSV/XLSX/OCR/LLM con pantalla de revision**.
-- Reemplazar `Dashboard.tsx` mock por datos obtenidos desde API.
+- Reemplazar `Dashboard.tsx` mock por datos obtenidos desde API. **Parcial: usa API con `communityId`, conserva fallback mock.**
 
 ## Prioridad 2: Experiencia Del Demo Comercial
 
