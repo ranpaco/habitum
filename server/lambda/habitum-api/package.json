@@ -4,12 +4,12 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@aws-sdk/client-dynamodb": "^3.800.0",
-    "@aws-sdk/client-bedrock-runtime": "^3.800.0",
-    "@aws-sdk/client-s3": "^3.800.0",
-    "@aws-sdk/client-textract": "^3.800.0",
-    "@aws-sdk/s3-request-presigner": "^3.800.0",
-    "fast-xml-parser": "^4.5.3",
+    "@aws-sdk/client-bedrock-runtime": "^3.1085.0",
+    "@aws-sdk/client-dynamodb": "^3.1085.0",
+    "@aws-sdk/client-s3": "^3.1085.0",
+    "@aws-sdk/client-textract": "^3.1085.0",
+    "@aws-sdk/s3-request-presigner": "^3.1085.0",
+    "fast-xml-parser": "^5.9.3",
     "jszip": "^3.10.1"
   }
 }
