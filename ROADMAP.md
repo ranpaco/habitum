@@ -32,7 +32,7 @@ Objetivo: dejar el MVP demo mas confiable antes de construir nuevas funcionalida
 - Agregar GitHub Actions para validar `npm install` y `npm run build` en cada push/PR.
 - Revisar vulnerabilidades con `npm audit` en raiz y en `server/lambda/habitum-api/`.
 - Separar claramente datos reales, fallback demo y mocks visuales. **Iniciado: fallback de dashboard movido a `src/app/mocks/`.**
-- Mejorar estados de UX del demo:
+- Mejorar estados de UX del demo. **Iniciado: retry en demo request, upload, procesamiento y dashboard live.**
   - carga;
   - error;
   - reintento;

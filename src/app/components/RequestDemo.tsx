@@ -194,8 +194,15 @@ export function RequestDemo({ isSubmitting = false, submitError, onSubmit }: Req
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 {submitError && (
-                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {submitError}
+                  <div className="flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between">
+                    <span>{submitError}</span>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSubmitting ? "Retrying..." : "Retry"}
+                    </button>
                   </div>
                 )}
 

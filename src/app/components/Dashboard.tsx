@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { AlertCircle, Bot, Building2, CheckCircle, DollarSign, FileText, Send, Users } from "lucide-react";
 import { fallbackDashboard } from "../mocks/dashboard";
 import { askCommunityAgent, getCommunityDashboard } from "../services/dashboard";
@@ -18,17 +18,11 @@ export function Dashboard() {
   const [isAskingAgent, setIsAskingAgent] = useState(false);
   const [agentError, setAgentError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const communityId = getCommunityIdFromHash() || sessionStorage.getItem(COMMUNITY_STORAGE_KEY);
-
-    if (!communityId) {
-      return;
-    }
-
+  const loadLiveDashboard = useCallback((communityId: string) => {
     setIsLoading(true);
     setLoadError(null);
 
-    getCommunityDashboard(communityId)
+    return getCommunityDashboard(communityId)
       .then((data) => {
         setDashboardData(data);
         setDataMode("live");
@@ -41,6 +35,16 @@ export function Dashboard() {
       })
       .finally(() => setIsLoading(false));
   }, []);
+
+  useEffect(() => {
+    const communityId = getCommunityIdFromHash() || sessionStorage.getItem(COMMUNITY_STORAGE_KEY);
+
+    if (!communityId) {
+      return;
+    }
+
+    loadLiveDashboard(communityId);
+  }, [loadLiveDashboard]);
 
   const { community, metrics, recentPayments, agent } = dashboardData;
   const isSampleData = dataMode === "sample";
@@ -104,8 +108,21 @@ export function Dashboard() {
         )}
 
         {loadError && (
-          <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
-            {loadError}
+          <div className="mb-6 flex flex-col gap-3 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800 sm:flex-row sm:items-center sm:justify-between">
+            <span>{loadError}</span>
+            {(getCommunityIdFromHash() || sessionStorage.getItem(COMMUNITY_STORAGE_KEY)) && (
+              <button
+                type="button"
+                onClick={() => {
+                  const communityId = getCommunityIdFromHash() || sessionStorage.getItem(COMMUNITY_STORAGE_KEY);
+                  if (communityId) loadLiveDashboard(communityId);
+                }}
+                disabled={isLoading}
+                className="rounded-lg border border-yellow-300 bg-white px-3 py-2 text-sm font-semibold text-yellow-800 hover:bg-yellow-100 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isLoading ? "Retrying..." : "Retry Live Data"}
+              </button>
+            )}
           </div>
         )}
 

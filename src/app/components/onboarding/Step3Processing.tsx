@@ -30,6 +30,7 @@ export function Step3Processing({ sessionId, onComplete }: Step3Props) {
   const [isSavingReview, setIsSavingReview] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reviewError, setReviewError] = useState<string | null>(null);
+  const [retryAttempt, setRetryAttempt] = useState(0);
 
   useEffect(() => {
     if (!sessionId) {
@@ -73,7 +74,7 @@ export function Step3Processing({ sessionId, onComplete }: Step3Props) {
     return () => {
       cancelled = true;
     };
-  }, [sessionId]);
+  }, [sessionId, retryAttempt]);
 
   useEffect(() => {
     const extractedRows = status?.extractedRows || status?.previewRows || [];
@@ -283,6 +284,22 @@ export function Step3Processing({ sessionId, onComplete }: Step3Props) {
           );
         })}
       </div>
+
+      {error && (
+        <div className="mx-auto max-w-md rounded-2xl border border-red-200 bg-red-50 p-5 text-center">
+          <p className="mb-4 text-sm text-red-700">
+            Your uploaded files are still selected in this session. You can retry processing now.
+          </p>
+          <Button
+            type="button"
+            onClick={() => setRetryAttempt((attempt) => attempt + 1)}
+            disabled={isStarting}
+            className="bg-[#1A365D] text-white hover:bg-[#142A49]"
+          >
+            {isStarting ? "Retrying..." : "Retry Processing"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

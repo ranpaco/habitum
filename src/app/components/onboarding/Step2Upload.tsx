@@ -241,8 +241,16 @@ export function Step2Upload({ isUploading = false, uploadError, onNext }: Step2P
       {/* CTA Button */}
       <div className="mt-12">
         {uploadError && (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {uploadError}
+          <div className="mb-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 sm:flex-row sm:items-center sm:justify-between">
+            <span>{uploadError}</span>
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={uploadedFiles.length === 0 || isUploading}
+              className="rounded-lg border border-red-300 bg-white px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isUploading ? "Retrying..." : "Retry Upload"}
+            </button>
           </div>
         )}
 
