@@ -1,41 +1,16 @@
 import { useEffect, useState } from "react";
 import { AlertCircle, Bot, Building2, CheckCircle, DollarSign, FileText, Send, Users } from "lucide-react";
+import { fallbackDashboard } from "../mocks/dashboard";
 import { askCommunityAgent, getCommunityDashboard } from "../services/dashboard";
 import { AgentAskResponse, DashboardData } from "../types/dashboard";
 
 const COMMUNITY_STORAGE_KEY = "habitum.communityId";
 
-const fallbackDashboard: DashboardData = {
-  community: {
-    id: "mock",
-    name: "Torre Vista Hermosa",
-    country: "Venezuela",
-    baseCurrency: "USD",
-    region: "latam",
-  },
-  metrics: {
-    totalUnits: 50,
-    activeOwners: 48,
-    totalBalances: 1200,
-    collectionRate: 94,
-  },
-  recentPayments: [
-    { unit: "A-101", owner: "María González", amount: 125, currency: "USD", status: "completed" },
-    { unit: "B-203", owner: "Carlos Rodríguez", amount: 125, currency: "USD", status: "completed" },
-    { unit: "C-305", owner: "Ana Martínez", amount: 125, currency: "USD", status: "pending" },
-  ],
-  agent: {
-    status: "mock",
-    knowledgeDocuments: 0,
-    suggestedQuestions: [
-      "Que dice el reglamento sobre mascotas?",
-      "Cuales son las normas de ruido?",
-    ],
-  },
-};
+type DashboardDataMode = "sample" | "live";
 
 export function Dashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData>(fallbackDashboard);
+  const [dataMode, setDataMode] = useState<DashboardDataMode>("sample");
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [agentQuestion, setAgentQuestion] = useState("");
@@ -56,19 +31,20 @@ export function Dashboard() {
     getCommunityDashboard(communityId)
       .then((data) => {
         setDashboardData(data);
+        setDataMode("live");
         sessionStorage.setItem(COMMUNITY_STORAGE_KEY, data.community.id);
       })
       .catch((error) => {
         console.error(error);
+        setDataMode("sample");
         setLoadError("We could not load the live dashboard data. Showing sample data.");
       })
       .finally(() => setIsLoading(false));
   }, []);
 
   const { community, metrics, recentPayments, agent } = dashboardData;
-  const activeCommunityId = community.id !== "mock"
-    ? community.id
-    : getCommunityIdFromHash() || sessionStorage.getItem(COMMUNITY_STORAGE_KEY);
+  const isSampleData = dataMode === "sample";
+  const activeCommunityId = isSampleData ? null : community.id;
 
   const askAgent = async (question: string) => {
     const trimmedQuestion = question.trim();
@@ -101,7 +77,9 @@ export function Dashboard() {
               </div>
               <div>
                 <span className="text-xl font-bold text-[#1A365D]">Habitum</span>
-                <p className="text-xs text-gray-600">{community.name}</p>
+                <p className="text-xs text-gray-600">
+                  {community.name}{isSampleData ? " · sample data" : ""}
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -128,6 +106,12 @@ export function Dashboard() {
         {loadError && (
           <div className="mb-6 rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
             {loadError}
+          </div>
+        )}
+
+        {isSampleData && (
+          <div className="mb-6 rounded-xl border border-[#00A3BF]/30 bg-[#00A3BF]/10 px-4 py-3 text-sm font-medium text-[#1A365D]">
+            Sample demo data is active. Complete onboarding or open a dashboard link with a communityId to load live data.
           </div>
         )}
 

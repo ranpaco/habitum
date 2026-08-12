@@ -31,7 +31,7 @@ Objetivo: dejar el MVP demo mas confiable antes de construir nuevas funcionalida
 
 - Agregar GitHub Actions para validar `npm install` y `npm run build` en cada push/PR.
 - Revisar vulnerabilidades con `npm audit` en raiz y en `server/lambda/habitum-api/`.
-- Separar claramente datos reales, fallback demo y mocks visuales.
+- Separar claramente datos reales, fallback demo y mocks visuales. **Iniciado: fallback de dashboard movido a `src/app/mocks/`.**
 - Mejorar estados de UX del demo:
   - carga;
   - error;
@@ -52,7 +52,7 @@ Objetivo: dejar el MVP demo mas confiable antes de construir nuevas funcionalida
 - Inicializar Git si este directorio sera la fuente principal del proyecto. **Completado: repo publicado en GitHub.**
 - Definir variables de entorno esperadas en un `.env.example`. **Completado para `VITE_API_BASE_URL`.**
 - Agregar CI basico con GitHub Actions para build de frontend.
-- Crear una convencion para datos mock, por ejemplo `src/app/mocks/`.
+- Crear una convencion para datos mock, por ejemplo `src/app/mocks/`. **Iniciado con `src/app/mocks/dashboard.ts`.**
 - Mover textos comerciales hardcodeados a configuraciones regionales cuando aplique.
 - Definir si el idioma por defecto sera espanol, ingles o dependiente de region.
 
