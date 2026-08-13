@@ -100,7 +100,7 @@ export function Step2Upload({ isUploading = false, uploadError, onNext }: Step2P
                 Drag & Drop Your Files Here
               </h3>
               <p className="text-gray-600 mb-6 text-lg">
-                Excel spreadsheets, PDFs, or images - we accept them all
+                CSV/Excel spreadsheets, PDFs, or images - we accept them all
               </p>
               
               <div className="flex flex-col items-center gap-4">
@@ -113,7 +113,7 @@ export function Step2Upload({ isUploading = false, uploadError, onNext }: Step2P
                     id="file-upload"
                     type="file"
                     multiple
-                    accept=".xlsx,.xls,.pdf,.jpg,.jpeg,.png"
+                    accept=".csv,.xlsx,.xls,.pdf,.jpg,.jpeg,.png"
                     onChange={handleFileInput}
                     className="hidden"
                   />
@@ -186,7 +186,7 @@ export function Step2Upload({ isUploading = false, uploadError, onNext }: Step2P
           <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
             <FileSpreadsheet className="w-6 h-6 text-blue-600" />
           </div>
-          <h4 className="font-semibold text-[#1A365D] mb-2">Excel Files</h4>
+          <h4 className="font-semibold text-[#1A365D] mb-2">CSV and Excel Files</h4>
           <p className="text-sm text-gray-600">Unit lists, owner rosters, payment records</p>
         </div>
 
