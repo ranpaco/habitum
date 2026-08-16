@@ -27,6 +27,7 @@ npm run dev -- --host 127.0.0.1 --port 5173
 Reusable fixtures:
 
 - `docs/qa-fixtures/onboarding-units.csv`: 3 fake units, 3 fake owners, `$400` total balances.
+- `docs/qa-fixtures/hoa-regulations.pdf`: synthetic HOA rules for repeatable agent/RAG grounding tests.
 
 ## Flow 1: Landing Page
 
@@ -152,7 +153,7 @@ Expected:
 
 ## Current QA Run
 
-Date: 2026-08-12.
+Date: 2026-08-12 and 2026-08-16.
 
 Environment:
 
@@ -208,16 +209,40 @@ Backend-integrated QA pass:
   - Recent payments showed the QA CSV rows.
 - Browser console errors during integrated pass: none observed.
 
+Agent/RAG integrated QA pass:
+
+- Fixture created: `docs/qa-fixtures/hoa-regulations.pdf`.
+  - Text extraction check with `pdfplumber`: pass.
+  - Poppler render check: not completed; `pdfinfo`/`pdftoppm` hung locally during this run.
+- Onboarding ingest with CSV + PDF via backend API: pass.
+  - Session: `obs_da777640-d978-4695-a117-e1439f8b8717`.
+  - Community: `com_ded6c2e2-74ae-484b-8962-82354c9a8118`.
+  - CSV fixture produced 3 units, 3 active owners, `$400` total balances, and 33% collection rate.
+  - PDF fixture produced 1 indexed knowledge document.
+- Dashboard live mode for the RAG community: pass.
+  - Sample banner was not visible.
+  - Community name was visible.
+  - Metrics showed 3 units and `$400`.
+  - Agent status showed `Ready`.
+  - Agent panel showed `1 uploaded document ready for grounded answers`.
+- Agent API grounding checks: pass.
+  - Pet rules question returned a grounded answer with citations.
+  - Quiet hours question returned a grounded answer with citations.
+  - Mortgage lender recommendation was flagged out of scope and returned no citations.
+- Agent browser UI check: pass.
+  - Submitted `What are the HOA pet rules?` from the dashboard agent input.
+  - Answer rendered with high confidence, pet/leash guidance, and `hoa-regulations.pdf` citation cards.
+
 Issues found and fixed:
 
 - CSV processing worked, but the upload file picker did not advertise `.csv` in `accept`. Fixed by adding `.csv` to the onboarding upload input and copy.
+- In-app browser file chooser automation failed once with `No node found for given backend id`; backend API ingestion was used as the reliable QA fallback. Manual user-browser upload should still be re-checked before a release rehearsal.
 
 Not covered in this run:
 
-- Agent answers grounded in uploaded regulation documents.
 - Mobile responsive screenshots.
 
 Next QA recommendations:
 
 - Capture screenshots for desktop and mobile widths.
-- Add a fake PDF regulation fixture for repeatable agent/RAG tests.
+- Re-run the full onboarding upload manually in a regular browser before a customer-facing demo.
