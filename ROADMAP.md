@@ -2,7 +2,7 @@
 
 Este roadmap separa lo que existe hoy, lo que falta para un demo funcional y lo que falta para convertir el sitio en producto SaaS real.
 
-Actualizado: 2026-07-10.
+Actualizado: 2026-08-16.
 
 ## Estado Actual
 
@@ -11,11 +11,14 @@ Actualizado: 2026-07-10.
 - Formulario de demo conectado a API dev (`POST /api/demo-requests`) con validacion local.
 - Onboarding de tres pasos conectado a backend MVP:
   - creacion de sesion/comunidad;
+  - seleccion entre carga de archivos o setup manual;
   - carga de archivos a S3 privado con presigned URLs;
-  - procesamiento real de CSV, XLSX, PDF, JPG y PNG.
+  - procesamiento real de CSV, XLSX, PDF, JPG y PNG;
+  - creacion manual de unidades, propietarios, saldos y reglas iniciales sin archivos.
 - OCR sincrono con Textract para PDF/JPG/PNG de hasta 5 MB.
 - Extraccion estructurada desde CSV/XLSX/OCR, con fallback LLM via Bedrock Converse usando `amazon.nova-micro-v1:0` en dev.
 - Pantalla de revision humana antes de confirmar la importacion; permite editar, agregar y eliminar filas.
+- Setup manual para condominios nuevos sin informacion digital; persiste unidades/saldos y reglas iniciales como fuente de conocimiento del agente.
 - Dashboard conectado a API cuando existe `communityId`, con fallback mock si no hay sesion o falla la carga.
 - Agente IA demo-grade para reglamentos/documentos subidos:
   - OCR/chunking simple;
@@ -86,6 +89,7 @@ Avance actual:
 - Prueba RAG end-to-end verificada con PDF de reglamento: pregunta sobre mascotas respondida con cita y confianza alta.
 - Gate de alcance del agente implementado y verificado: preguntas no relacionadas al condominio/sitio retornan `outOfScope: true` sin consultar conocimiento externo.
 - Checklist inicial de documentos HOA/USA agregado a onboarding: governing documents, finanzas/assessments, owner roster, meetings/elections, insurance/contracts y compliance workflow.
+- Camino manual de onboarding agregado para comunidades sin archivos digitales: unidades, propietarios, saldos iniciales y reglas base para el agente.
 
 - Crear API para solicitud de demo:
   - guardar nombre, email, telefono, pais, condominio, tamano y rol; **MVP completado con DynamoDB**;
@@ -94,6 +98,7 @@ Avance actual:
 - Crear API para onboarding demo:
   - crear cuenta demo o sesion temporal; **MVP completado como sesion temporal**;
   - recibir metadata del condominio; **MVP completado**;
+  - permitir setup manual sin archivos; **MVP completado**;
   - aceptar carga de Excel, PDF e imagenes; **MVP completado con S3 presigned URLs**;
   - almacenar archivos de forma segura; **MVP completado en S3 privado con lifecycle de 30 dias**.
 - Implementar procesamiento inicial:
@@ -112,6 +117,7 @@ Avance actual:
   - propietarios/residentes; **MVP completado como datos importados/revisados**;
   - saldos/deudas; **MVP completado como datos importados/revisados**;
   - documentos/reglamentos; **MVP completado como archivos + chunks simples de conocimiento**;
+  - reglas manuales de comunidad; **MVP completado como documento interno + chunks simples de conocimiento**;
   - eventos de importacion; **pendiente como auditoria formal**.
 - Reemplazar resultados mock de `Step3Processing.tsx` por datos reales de una respuesta de backend. **MVP completado para CSV/XLSX/OCR/LLM con pantalla de revision**.
 - Reemplazar `Dashboard.tsx` mock por datos obtenidos desde API. **Parcial: usa API con `communityId`, conserva fallback mock.**

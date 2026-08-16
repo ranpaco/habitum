@@ -1,17 +1,61 @@
 import { useState, useCallback } from "react";
 import { Button } from "../ui/button";
-import { Upload, FileSpreadsheet, FileText, Camera, Sparkles } from "lucide-react";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Upload, FileSpreadsheet, FileText, Camera, Sparkles, ClipboardList, Plus, Trash2 } from "lucide-react";
 import { hoaDocumentChecklist } from "../../config/hoaDocumentChecklist";
+import { ManualSetupInput, ManualSetupRow, ManualSetupRules } from "../../types/onboarding";
 
 interface Step2Props {
   isUploading?: boolean;
+  isSavingManualSetup?: boolean;
   uploadError?: string | null;
+  manualSetupError?: string | null;
   onNext: (files: File[]) => void | Promise<void>;
+  onManualNext: (input: ManualSetupInput) => void | Promise<void>;
 }
 
-export function Step2Upload({ isUploading = false, uploadError, onNext }: Step2Props) {
+type SetupMode = "upload" | "manual";
+
+const emptyManualRow: ManualSetupRow = {
+  unit: "",
+  owner: "",
+  balance: 0,
+};
+
+const emptyRules: ManualSetupRules = {
+  pets: "",
+  quietHours: "",
+  parking: "",
+  reservations: "",
+  maintenance: "",
+  payments: "",
+  additional: "",
+};
+
+export function Step2Upload({
+  isUploading = false,
+  isSavingManualSetup = false,
+  uploadError,
+  manualSetupError,
+  onNext,
+  onManualNext,
+}: Step2Props) {
+  const [setupMode, setSetupMode] = useState<SetupMode>("upload");
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [manualRows, setManualRows] = useState<ManualSetupRow[]>([
+    { unit: "101", owner: "", balance: 0 },
+    { unit: "102", owner: "", balance: 0 },
+    { unit: "103", owner: "", balance: 0 },
+  ]);
+  const [rules, setRules] = useState<ManualSetupRules>({
+    ...emptyRules,
+    pets: "Residents may keep domestic pets if they do not disturb neighbors. Dogs must remain on leash in common areas.",
+    quietHours: "Quiet hours are from 10:00 PM to 7:00 AM Sunday through Thursday and 11:00 PM to 8:00 AM Friday and Saturday.",
+    maintenance: "Residents should report leaks, elevator issues, lighting failures, and security concerns to the administrator.",
+    payments: "Monthly assessments are due on the first day of each month. Late payments should be reviewed by administration.",
+  });
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -43,6 +87,36 @@ export function Step2Upload({ isUploading = false, uploadError, onNext }: Step2P
     }
   };
 
+  const handleManualSubmit = () => {
+    onManualNext({
+      rows: manualRows
+        .map((row) => ({
+          unit: row.unit.trim(),
+          owner: row.owner.trim(),
+          balance: Number(row.balance) || 0,
+        }))
+        .filter((row) => row.unit || row.owner),
+      rules,
+    });
+  };
+
+  const updateManualRow = (index: number, changes: Partial<ManualSetupRow>) => {
+    setManualRows((rows) => rows.map((row, rowIndex) => (
+      rowIndex === index ? { ...row, ...changes } : row
+    )));
+  };
+
+  const removeManualRow = (index: number) => {
+    setManualRows((rows) => rows.length > 1 ? rows.filter((_, rowIndex) => rowIndex !== index) : rows);
+  };
+
+  const addManualRow = () => {
+    setManualRows((rows) => [...rows, { ...emptyManualRow }]);
+  };
+
+  const hasManualRows = manualRows.some((row) => row.unit.trim() || row.owner.trim());
+  const hasManualRules = Object.values(rules).some((value) => value.trim());
+
   return (
     <div className="max-w-4xl mx-auto">
       <div className="text-center mb-12">
@@ -53,13 +127,165 @@ export function Step2Upload({ isUploading = false, uploadError, onNext }: Step2P
           </div>
         </div>
         <h1 className="text-4xl font-bold text-[#1A365D] mb-4">
-          The Magic Upload
+          Choose Your Setup Path
         </h1>
         <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          AI will digitize and structure all your data (Units, Owners, Debts) in minutes. 
-          <span className="text-[#00A3BF] font-semibold"> Zero manual work required.</span>
+          Start from existing files or create the first version manually for a brand-new community.
         </p>
       </div>
+
+      <div className="mb-8 grid gap-4 md:grid-cols-2">
+        <button
+          type="button"
+          onClick={() => setSetupMode("upload")}
+          className={`rounded-2xl border-2 bg-white p-6 text-left shadow-md transition-all ${
+            setupMode === "upload"
+              ? "border-[#00A3BF] ring-4 ring-[#00A3BF]/10"
+              : "border-gray-100 hover:border-[#00A3BF]/50"
+          }`}
+        >
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#00A3BF]/10">
+            <Upload className="h-6 w-6 text-[#00A3BF]" />
+          </div>
+          <h2 className="text-xl font-bold text-[#1A365D]">Upload existing files</h2>
+          <p className="mt-2 text-sm leading-6 text-gray-600">
+            Use CSV, Excel, PDF, or photos when the association already has records or regulations.
+          </p>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setSetupMode("manual")}
+          className={`rounded-2xl border-2 bg-white p-6 text-left shadow-md transition-all ${
+            setupMode === "manual"
+              ? "border-[#00A3BF] ring-4 ring-[#00A3BF]/10"
+              : "border-gray-100 hover:border-[#00A3BF]/50"
+          }`}
+        >
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#1A365D]/10">
+            <ClipboardList className="h-6 w-6 text-[#1A365D]" />
+          </div>
+          <h2 className="text-xl font-bold text-[#1A365D]">Manual setup</h2>
+          <p className="mt-2 text-sm leading-6 text-gray-600">
+            Create units, owner balances, and starter rules without uploading any documents.
+          </p>
+        </button>
+      </div>
+
+      {setupMode === "manual" ? (
+        <div className="space-y-8">
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-md">
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-[#1A365D]">Units and Owners</h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  Add the first active units. Balances can stay at zero for a new condominium.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={addManualRow}
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#00A3BF] px-4 py-2 text-sm font-semibold text-[#00A3BF] hover:bg-[#00A3BF]/10"
+              >
+                <Plus className="h-4 w-4" />
+                Add Unit
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {manualRows.map((row, index) => (
+                <div key={index} className="grid gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4 md:grid-cols-[1fr_2fr_1fr_auto] md:items-end">
+                  <div>
+                    <Label htmlFor={`manual-unit-${index}`} className="mb-2 block text-sm font-medium text-gray-700">
+                      Unit
+                    </Label>
+                    <Input
+                      id={`manual-unit-${index}`}
+                      value={row.unit}
+                      onChange={(event) => updateManualRow(index, { unit: event.target.value })}
+                      placeholder="101"
+                      className="h-11 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`manual-owner-${index}`} className="mb-2 block text-sm font-medium text-gray-700">
+                      Owner or Resident
+                    </Label>
+                    <Input
+                      id={`manual-owner-${index}`}
+                      value={row.owner}
+                      onChange={(event) => updateManualRow(index, { owner: event.target.value })}
+                      placeholder="Owner name"
+                      className="h-11 bg-white"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor={`manual-balance-${index}`} className="mb-2 block text-sm font-medium text-gray-700">
+                      Opening Balance
+                    </Label>
+                    <Input
+                      id={`manual-balance-${index}`}
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={row.balance}
+                      onChange={(event) => updateManualRow(index, { balance: Number(event.target.value) || 0 })}
+                      className="h-11 bg-white"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeManualRow(index)}
+                    disabled={manualRows.length === 1}
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-gray-300 bg-white text-gray-500 hover:border-red-300 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-40"
+                    aria-label="Remove unit row"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-md">
+            <h3 className="text-xl font-bold text-[#1A365D]">Starter Rules for the AI Agent</h3>
+            <p className="mt-1 text-sm text-gray-600">
+              These notes become the initial knowledge source until formal documents are uploaded later.
+            </p>
+
+            <div className="mt-6 grid gap-5 md:grid-cols-2">
+              <RuleTextArea label="Pets" value={rules.pets} onChange={(value) => setRules({ ...rules, pets: value })} />
+              <RuleTextArea label="Quiet Hours" value={rules.quietHours} onChange={(value) => setRules({ ...rules, quietHours: value })} />
+              <RuleTextArea label="Parking" value={rules.parking} onChange={(value) => setRules({ ...rules, parking: value })} />
+              <RuleTextArea label="Reservations" value={rules.reservations} onChange={(value) => setRules({ ...rules, reservations: value })} />
+              <RuleTextArea label="Maintenance" value={rules.maintenance} onChange={(value) => setRules({ ...rules, maintenance: value })} />
+              <RuleTextArea label="Payments" value={rules.payments} onChange={(value) => setRules({ ...rules, payments: value })} />
+              <div className="md:col-span-2">
+                <RuleTextArea label="Additional Notes" value={rules.additional} onChange={(value) => setRules({ ...rules, additional: value })} />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            {manualSetupError && (
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {manualSetupError}
+              </div>
+            )}
+
+            <Button
+              onClick={handleManualSubmit}
+              disabled={!hasManualRows || !hasManualRules || isSavingManualSetup}
+              size="lg"
+              className="h-14 w-full bg-gradient-to-r from-[#00A3BF] to-[#1A365D] text-lg font-semibold text-white shadow-xl hover:from-[#00A3BF]/90 hover:to-[#1A365D]/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <ClipboardList className="mr-2 h-5 w-5" />
+              {isSavingManualSetup ? "Saving Manual Setup..." : "Save Manual Setup and Open Dashboard"}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <>
 
       {/* Drag and Drop Zone */}
       <div
@@ -269,6 +495,34 @@ export function Step2Upload({ isUploading = false, uploadError, onNext }: Step2P
           )}
         </Button>
       </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+interface RuleTextAreaProps {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}
+
+function RuleTextArea({ label, value, onChange }: RuleTextAreaProps) {
+  const id = `rule-${label.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+
+  return (
+    <div>
+      <Label htmlFor={id} className="mb-2 block text-sm font-medium text-gray-700">
+        {label}
+      </Label>
+      <textarea
+        id={id}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        rows={4}
+        className="w-full resize-y rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm leading-6 outline-none transition-all placeholder:text-gray-400 focus:border-[#00A3BF] focus:ring-2 focus:ring-[#00A3BF]/20"
+        placeholder={`Add ${label.toLowerCase()} guidance`}
+      />
     </div>
   );
 }

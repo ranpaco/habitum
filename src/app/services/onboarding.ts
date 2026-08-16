@@ -1,9 +1,11 @@
 import { apiRequest } from "./apiClient";
 import {
   CompleteOnboardingFilesResponse,
+  CompleteManualSetupResponse,
   CompleteOnboardingAccountResponse,
   CreateOnboardingSessionInput,
   CreateOnboardingSessionResponse,
+  ManualSetupInput,
   OnboardingAccountFormData,
   OnboardingStatusResponse,
   ProcessOnboardingSessionResponse,
@@ -53,6 +55,16 @@ export function reviewOnboardingData(sessionId: string, rows: ProcessingPreviewR
     {
       method: "PATCH",
       body: JSON.stringify({ rows }),
+    },
+  );
+}
+
+export function completeManualOnboardingSetup(sessionId: string, input: ManualSetupInput) {
+  return apiRequest<CompleteManualSetupResponse>(
+    `/api/onboarding/sessions/${sessionId}/manual-setup`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
     },
   );
 }

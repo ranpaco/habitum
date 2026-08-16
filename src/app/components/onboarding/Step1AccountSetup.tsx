@@ -174,7 +174,7 @@ export function Step1AccountSetup({ isSubmitting = false, submitError, onNext }:
             disabled={isSubmitting}
             className="w-full h-14 bg-gradient-to-r from-[#00A3BF] to-[#1A365D] hover:from-[#00A3BF]/90 hover:to-[#1A365D]/90 text-white text-lg font-semibold shadow-xl hover:shadow-2xl transition-all"
           >
-            {isSubmitting ? "Creating Workspace..." : "Continue to Upload"}
+            {isSubmitting ? "Creating Workspace..." : "Continue to Setup"}
             {!isSubmitting && (
               <svg className="w-5 h-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />

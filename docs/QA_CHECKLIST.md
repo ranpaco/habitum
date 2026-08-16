@@ -89,12 +89,14 @@ External side effect:
 - Successful continue creates/updates onboarding session and community records in the configured backend.
 - Use fake QA data only.
 
-## Flow 5: Onboarding Step 2 Upload
+## Flow 5A: Onboarding Step 2 Upload Path
 
 Entry: completed onboarding step 1.
 
 Expected:
 
+- Setup path selector renders `Upload existing files` and `Manual setup`.
+- Upload path can be selected without losing previously selected files.
 - Drag/drop zone renders.
 - File picker accepts `.csv`, `.xlsx`, `.xls`, `.pdf`, `.jpg`, `.jpeg`, and `.png` where supported by the browser.
 - Selected files are listed with name and size.
@@ -107,7 +109,29 @@ External side effect:
 - Successful upload stores files in S3 via presigned URLs.
 - Use small fake QA files only.
 
-## Flow 6: Onboarding Step 3 Processing
+## Flow 5B: Onboarding Step 2 Manual Setup Path
+
+Entry: completed onboarding step 1.
+
+Expected:
+
+- Manual setup path can be selected.
+- Unit rows render with unit, owner/resident, and opening balance fields.
+- Add unit creates a new blank row.
+- Delete unit removes a row but keeps at least one row available.
+- Submit is disabled until at least one unit/owner row and one rule note are present.
+- Starter rules render for pets, quiet hours, parking, reservations, maintenance, payments, and additional notes.
+- Successful submit skips file processing and opens `#dashboard?communityId=<id>`.
+- Live dashboard shows manual units, owner balances, and no sample banner.
+- Agent shows a ready knowledge source when manual rules were entered.
+- Agent can answer from manual rules with citations to `Manual onboarding rules`.
+
+External side effect:
+
+- Successful manual setup persists community rows and starter rules through `PATCH /api/onboarding/sessions/{sessionId}/manual-setup`.
+- Use fake QA data only.
+
+## Flow 6: Onboarding Step 3 Upload Processing
 
 Entry: completed upload.
 
@@ -245,4 +269,6 @@ Not covered in this run:
 Next QA recommendations:
 
 - Capture screenshots for desktop and mobile widths.
-- Re-run the full onboarding upload manually in a regular browser before a customer-facing demo.
+- Re-run both onboarding branches manually in a regular browser before a customer-facing demo:
+  - upload path with CSV + PDF;
+  - manual setup path with typed units and rules.

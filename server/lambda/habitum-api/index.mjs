@@ -85,6 +85,11 @@ export async function handler(event) {
       return reviewOnboardingSession(reviewMatch[1], parseBody(event));
     }
 
+    const manualSetupMatch = path.match(/^\/api\/onboarding\/sessions\/([^/]+)\/manual-setup$/);
+    if (method === "PATCH" && manualSetupMatch) {
+      return completeManualOnboardingSetup(manualSetupMatch[1], parseBody(event));
+    }
+
     const statusMatch = path.match(/^\/api\/onboarding\/sessions\/([^/]+)\/status$/);
     if (method === "GET" && statusMatch) {
       return getOnboardingStatus(statusMatch[1]);
@@ -555,6 +560,110 @@ async function reviewOnboardingSession(sessionId, body) {
   });
 }
 
+async function completeManualOnboardingSetup(sessionId, body) {
+  const sessionResult = await ddb.send(new GetItemCommand({
+    TableName: env.onboardingSessionsTable,
+    Key: { id: { S: sessionId } },
+  }));
+
+  if (!sessionResult.Item) {
+    return response(404, { error: "session_not_found" });
+  }
+
+  const communityId = sessionResult.Item.communityId?.S;
+  if (!communityId) {
+    return response(400, { error: "community_not_ready" });
+  }
+
+  const rows = Array.isArray(body.rows) ? body.rows : [];
+  const normalizedRows = rows
+    .map((row) => ({
+      unit: String(row.unit || "").trim(),
+      owner: String(row.owner || "").trim(),
+      balance: parseMoney(row.balance),
+    }))
+    .filter((row) => row.unit || row.owner);
+
+  if (normalizedRows.length === 0) {
+    return response(400, { error: "manual_rows_required" });
+  }
+
+  const rulesText = buildManualRulesText(body.rules);
+  const knowledgeDocuments = rulesText
+    ? [buildManualKnowledgeDocument(communityId, rulesText)]
+    : [];
+  const result = buildExtractionResult(normalizedRows, knowledgeDocuments.length, [], knowledgeDocuments);
+  const completedAt = new Date().toISOString();
+
+  await ddb.send(new UpdateItemCommand({
+    TableName: env.communitiesTable,
+    Key: { id: { S: communityId } },
+    UpdateExpression: [
+      "SET totalUnits = :totalUnits",
+      "activeOwners = :activeOwners",
+      "totalBalances = :totalBalances",
+      "collectionRate = :collectionRate",
+      "recentPaymentsJson = :recentPaymentsJson",
+      "processingSummaryJson = :processingSummaryJson",
+      "previewRowsJson = :previewRowsJson",
+      "extractedRowsJson = :extractedRowsJson",
+      "knowledgeDocumentsJson = :knowledgeDocumentsJson",
+      "knowledgeChunksJson = :knowledgeChunksJson",
+      "updatedAt = :updatedAt",
+    ].join(", "),
+    ExpressionAttributeValues: {
+      ":totalUnits": { N: String(result.summary.unitsFound) },
+      ":activeOwners": { N: String(result.summary.ownersFound) },
+      ":totalBalances": { N: String(result.summary.totalBalances) },
+      ":collectionRate": { N: String(result.summary.collectionRate) },
+      ":recentPaymentsJson": { S: JSON.stringify(result.recentPayments) },
+      ":processingSummaryJson": { S: JSON.stringify(result.summary) },
+      ":previewRowsJson": { S: JSON.stringify(result.previewRows) },
+      ":extractedRowsJson": { S: JSON.stringify(result.extractedRows) },
+      ":knowledgeDocumentsJson": { S: JSON.stringify(result.knowledgeDocuments) },
+      ":knowledgeChunksJson": { S: JSON.stringify(result.knowledgeChunks) },
+      ":updatedAt": { S: completedAt },
+    },
+  }));
+
+  await ddb.send(new UpdateItemCommand({
+    TableName: env.onboardingSessionsTable,
+    Key: { id: { S: sessionId } },
+    UpdateExpression: [
+      "SET updatedAt = :updatedAt",
+      "#status = :status",
+      "progress = :progress",
+      "processingSummaryJson = :processingSummaryJson",
+      "previewRowsJson = :previewRowsJson",
+      "extractedRowsJson = :extractedRowsJson",
+      "issuesJson = :issuesJson",
+      "manualSetupCompletedAt = :manualSetupCompletedAt",
+    ].join(", "),
+    ExpressionAttributeNames: { "#status": "status" },
+    ExpressionAttributeValues: {
+      ":updatedAt": { S: completedAt },
+      ":status": { S: "manual_setup_completed" },
+      ":progress": { N: "100" },
+      ":processingSummaryJson": { S: JSON.stringify(result.summary) },
+      ":previewRowsJson": { S: JSON.stringify(result.previewRows) },
+      ":extractedRowsJson": { S: JSON.stringify(result.extractedRows) },
+      ":issuesJson": { S: JSON.stringify(result.issues) },
+      ":manualSetupCompletedAt": { S: completedAt },
+    },
+  }));
+
+  return response(200, {
+    sessionId,
+    communityId,
+    status: "manual_setup_completed",
+    progress: 100,
+    summary: result.summary,
+    previewRows: result.previewRows,
+    extractedRows: result.extractedRows,
+    issues: result.issues,
+  });
+}
+
 async function getOnboardingStatus(sessionId) {
   const result = await ddb.send(new GetItemCommand({
     TableName: env.onboardingSessionsTable,
@@ -654,7 +763,7 @@ async function askCommunityAgent(communityId, body) {
 
   if (knowledgeChunks.length === 0) {
     return response(200, {
-      answer: "Todavia no hay reglamentos o documentos con texto suficiente en esta comunidad. Sube un PDF o imagen clara del reglamento durante el onboarding para activar respuestas basadas en documentos.",
+      answer: "Todavia no hay reglamentos, documentos o reglas manuales con texto suficiente en esta comunidad. Sube un PDF, una imagen clara del reglamento o completa el setup manual para activar respuestas basadas en conocimiento.",
       confidence: "none",
       needsHumanReview: true,
       citations: [],
@@ -876,6 +985,40 @@ function makeKnowledgeChunk(document, text, chunkIndex) {
     documentName: document.name,
     chunkIndex,
     text: text.slice(0, KNOWLEDGE_CHUNK_SIZE),
+  };
+}
+
+function buildManualRulesText(rules) {
+  if (!rules || typeof rules !== "object") return "";
+
+  const sections = [
+    ["Pet Rules", rules.pets],
+    ["Quiet Hours and Noise", rules.quietHours],
+    ["Parking", rules.parking],
+    ["Reservations and Amenities", rules.reservations],
+    ["Maintenance Requests", rules.maintenance],
+    ["Payments and Assessments", rules.payments],
+    ["Additional Community Notes", rules.additional],
+  ];
+
+  return sections
+    .map(([title, value]) => {
+      const text = String(value || "").trim();
+      return text ? `${title}: ${text}` : "";
+    })
+    .filter(Boolean)
+    .join("\n\n")
+    .slice(0, 12000);
+}
+
+function buildManualKnowledgeDocument(communityId, text) {
+  return {
+    fileId: `manual_${communityId}`,
+    name: "Manual onboarding rules",
+    kind: "manual",
+    text,
+    lineCount: text.split(/\n+/).filter(Boolean).length,
+    averageConfidence: 100,
   };
 }
 
@@ -1496,6 +1639,7 @@ function getProgressForStatus(status) {
   if (status === "processing_running") return 75;
   if (status === "files_uploaded") return 45;
   if (status === "account_completed") return 25;
+  if (status === "manual_setup_completed") return 100;
   if (status === "review_completed") return 100;
   if (status === "completed") return 100;
   return 0;

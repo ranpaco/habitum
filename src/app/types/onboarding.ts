@@ -58,6 +58,27 @@ export interface ProcessingIssue {
   message: string;
 }
 
+export interface ManualSetupRow {
+  unit: string;
+  owner: string;
+  balance: number;
+}
+
+export interface ManualSetupRules {
+  pets: string;
+  quietHours: string;
+  parking: string;
+  reservations: string;
+  maintenance: string;
+  payments: string;
+  additional: string;
+}
+
+export interface ManualSetupInput {
+  rows: ManualSetupRow[];
+  rules: ManualSetupRules;
+}
+
 export interface ProcessOnboardingSessionResponse {
   sessionId: string;
   jobId: string;
@@ -72,6 +93,17 @@ export interface ProcessOnboardingSessionResponse {
 export interface ReviewOnboardingDataResponse {
   sessionId: string;
   status: "review_completed";
+  progress: number;
+  summary: ProcessingSummary;
+  previewRows: ProcessingPreviewRow[];
+  extractedRows: ProcessingPreviewRow[];
+  issues: ProcessingIssue[];
+}
+
+export interface CompleteManualSetupResponse {
+  sessionId: string;
+  communityId: string;
+  status: "manual_setup_completed";
   progress: number;
   summary: ProcessingSummary;
   previewRows: ProcessingPreviewRow[];

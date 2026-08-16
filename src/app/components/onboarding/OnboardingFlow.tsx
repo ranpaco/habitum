@@ -5,8 +5,13 @@ import { Step2Upload } from "./Step2Upload";
 import { Step3Processing } from "./Step3Processing";
 import { ArrowLeft } from "lucide-react";
 import { useRegion } from "../../context/RegionContext";
-import { completeOnboardingAccount, createOnboardingSession, uploadOnboardingFiles } from "../../services/onboarding";
-import { OnboardingAccountFormData } from "../../types/onboarding";
+import {
+  completeManualOnboardingSetup,
+  completeOnboardingAccount,
+  createOnboardingSession,
+  uploadOnboardingFiles,
+} from "../../services/onboarding";
+import { ManualSetupInput, OnboardingAccountFormData } from "../../types/onboarding";
 
 const SESSION_STORAGE_KEY = "habitum.onboardingSessionId";
 const COMMUNITY_STORAGE_KEY = "habitum.communityId";
@@ -20,6 +25,8 @@ export function OnboardingFlow() {
   const [accountError, setAccountError] = useState<string | null>(null);
   const [isUploadingFiles, setIsUploadingFiles] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isSavingManualSetup, setIsSavingManualSetup] = useState(false);
+  const [manualSetupError, setManualSetupError] = useState<string | null>(null);
 
   const handleStep1Complete = async (data: OnboardingAccountFormData) => {
     setIsSubmittingAccount(true);
@@ -67,6 +74,28 @@ export function OnboardingFlow() {
       setUploadError("We could not upload your files. Please check the file type and try again.");
     } finally {
       setIsUploadingFiles(false);
+    }
+  };
+
+  const handleManualSetupComplete = async (input: ManualSetupInput) => {
+    if (!sessionId) {
+      setManualSetupError("The onboarding session is missing. Please go back and create the workspace again.");
+      return;
+    }
+
+    setIsSavingManualSetup(true);
+    setManualSetupError(null);
+
+    try {
+      const result = await completeManualOnboardingSetup(sessionId, input);
+      setCommunityId(result.communityId);
+      sessionStorage.setItem(COMMUNITY_STORAGE_KEY, result.communityId);
+      window.location.href = `#dashboard?communityId=${result.communityId}`;
+    } catch (error) {
+      console.error(error);
+      setManualSetupError("We could not save the manual setup. Please review the rows and try again.");
+    } finally {
+      setIsSavingManualSetup(false);
     }
   };
 
@@ -122,8 +151,11 @@ export function OnboardingFlow() {
           {currentStep === 2 && (
             <Step2Upload
               isUploading={isUploadingFiles}
+              isSavingManualSetup={isSavingManualSetup}
               uploadError={uploadError}
+              manualSetupError={manualSetupError}
               onNext={handleStep2Complete}
+              onManualNext={handleManualSetupComplete}
             />
           )}
           {currentStep === 3 && (

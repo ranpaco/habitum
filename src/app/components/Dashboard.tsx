@@ -233,8 +233,8 @@ export function Dashboard() {
                 <h2 className="text-2xl font-bold text-[#1A365D] mb-2">AI Rules Agent</h2>
                 <p className="text-sm text-gray-600">
                   {agent.knowledgeDocuments > 0
-                    ? `${agent.knowledgeDocuments} uploaded document${agent.knowledgeDocuments === 1 ? "" : "s"} ready for grounded answers.`
-                    : "Upload a clear PDF or image of the regulations to activate grounded answers."}
+                    ? `${agent.knowledgeDocuments} knowledge source${agent.knowledgeDocuments === 1 ? "" : "s"} ready for grounded answers.`
+                    : "Upload regulations or add manual rules to activate grounded answers."}
                 </p>
               </div>
               <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold ${
@@ -284,7 +284,7 @@ export function Dashboard() {
 
             {isAskingAgent && (
               <div className="mt-5 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
-                Searching uploaded regulations...
+                Searching community knowledge...
               </div>
             )}
 
