@@ -1,0 +1,57 @@
+name: Deploy Dev
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-dev
+  cancel-in-progress: false
+
+env:
+  AWS_REGION: us-east-1
+  AWS_PROFILE: ""
+  PROJECT_NAME: habitum
+  ENVIRONMENT: dev
+  BEDROCK_MODEL_ID: amazon.nova-micro-v1:0
+  AWS_DEPLOY_ROLE_ARN: arn:aws:iam::917925998251:role/habitum-dev-github-actions-deploy
+
+jobs:
+  deploy:
+    name: Deploy backend and web
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy backend
+        run: infra/aws/deploy-dev.sh
+
+      - name: Deploy web
+        run: infra/aws/deploy-web-dev.sh

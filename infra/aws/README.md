@@ -228,6 +228,80 @@ Para apuntar a otro backend:
 VITE_API_BASE_URL=https://...execute-api.us-east-1.amazonaws.com infra/aws/deploy-web-dev.sh
 ```
 
+## Continuous Deployment
+
+El repositorio incluye GitHub Actions para deploy automatico de dev:
+
+```text
+.github/workflows/deploy-dev.yml
+```
+
+El workflow corre en cada push a `main` y tambien puede ejecutarse manualmente desde GitHub Actions. Hace:
+
+- checkout del repo;
+- `npm ci`;
+- `npm run build`;
+- autenticacion AWS por OIDC;
+- deploy del backend con `infra/aws/deploy-dev.sh`;
+- deploy del frontend con `infra/aws/deploy-web-dev.sh`;
+- invalidacion de cache CloudFront.
+
+Rol OIDC dev creado:
+
+```text
+arn:aws:iam::917925998251:role/habitum-dev-github-actions-deploy
+```
+
+El workflow referencia ese ARN directamente porque no es un secreto y la trust policy del rol esta limitada a `ranpaco/habitum` en `main`.
+
+Para recrearlo desde cero, desplegar:
+
+```bash
+aws cloudformation deploy \
+  --stack-name habitum-dev-github-oidc \
+  --template-file infra/aws/github-oidc-role.yaml \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --profile habitum-dev \
+  --region us-east-1
+```
+
+Si el proveedor OIDC `token.actions.githubusercontent.com` ya existe en la cuenta AWS:
+
+```bash
+aws cloudformation deploy \
+  --stack-name habitum-dev-github-oidc \
+  --template-file infra/aws/github-oidc-role.yaml \
+  --capabilities CAPABILITY_NAMED_IAM \
+  --parameter-overrides CreateOidcProvider=false \
+  --profile habitum-dev \
+  --region us-east-1
+```
+
+Para obtener el ARN del rol:
+
+```bash
+aws cloudformation describe-stacks \
+  --stack-name habitum-dev-github-oidc \
+  --query "Stacks[0].Outputs[?OutputKey=='RoleArn'].OutputValue | [0]" \
+  --output text \
+  --profile habitum-dev \
+  --region us-east-1
+```
+
+El workflow usa estos valores por defecto:
+
+```text
+AWS_REGION=us-east-1
+PROJECT_NAME=habitum
+ENVIRONMENT=dev
+BEDROCK_MODEL_ID=amazon.nova-micro-v1:0
+```
+
+Nota: los scripts de deploy soportan dos modos:
+
+- local: `AWS_PROFILE=habitum-dev`;
+- GitHub Actions: `AWS_PROFILE=""` y credenciales OIDC inyectadas por `aws-actions/configure-aws-credentials`.
+
 ## Endpoints MVP
 
 ```http
