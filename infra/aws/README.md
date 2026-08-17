@@ -300,7 +300,7 @@ BEDROCK_MODEL_ID=amazon.nova-micro-v1:0
 Nota: los scripts de deploy soportan dos modos:
 
 - local: `AWS_PROFILE=habitum-dev`;
-- GitHub Actions: `AWS_PROFILE=""` y credenciales OIDC inyectadas por `aws-actions/configure-aws-credentials`.
+- GitHub Actions: credenciales OIDC inyectadas por `aws-actions/configure-aws-credentials`; los scripts detectan `GITHUB_ACTIONS=true` y omiten `--profile`.
 
 ## Endpoints MVP
 

@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROFILE="${AWS_PROFILE-habitum-dev}"
+PROFILE="${AWS_PROFILE-}"
+if [[ -z "${PROFILE}" && "${GITHUB_ACTIONS:-}" != "true" ]]; then
+  PROFILE="habitum-dev"
+fi
 REGION="${AWS_REGION:-us-east-1}"
 PROJECT_NAME="${PROJECT_NAME:-habitum}"
 ENVIRONMENT="${ENVIRONMENT:-dev}"

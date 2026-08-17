@@ -4,7 +4,10 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
-AWS_PROFILE="${AWS_PROFILE-habitum-dev}"
+AWS_PROFILE="${AWS_PROFILE-}"
+if [[ -z "$AWS_PROFILE" && "${GITHUB_ACTIONS:-}" != "true" ]]; then
+  AWS_PROFILE="habitum-dev"
+fi
 AWS_REGION="${AWS_REGION:-us-east-1}"
 PROJECT_NAME="${PROJECT_NAME:-habitum}"
 ENVIRONMENT="${ENVIRONMENT:-dev}"
