@@ -177,7 +177,7 @@ Expected:
 
 ## Current QA Run
 
-Date: 2026-08-12 and 2026-08-16.
+Date: 2026-08-12, 2026-08-16, and 2026-08-17.
 
 Environment:
 
@@ -257,10 +257,30 @@ Agent/RAG integrated QA pass:
   - Submitted `What are the HOA pet rules?` from the dashboard agent input.
   - Answer rendered with high confidence, pet/leash guidance, and `hoa-regulations.pdf` citation cards.
 
+Manual onboarding integrated QA pass:
+
+- Backend dev deployment for manual setup endpoint: pass.
+  - Initial deploy used the script default `BEDROCK_MODEL_ID=disabled`, which preserved citations but returned the fallback model-unavailable answer.
+  - Redeployed dev with `BEDROCK_MODEL_ID=amazon.nova-micro-v1:0` before final agent validation.
+- Manual setup via API with fake data: pass.
+  - Session: `obs_bee15951-1829-4293-a66f-01e01797c4cd`.
+  - Community: `com_b7de899a-a40f-4cb4-986c-423dd652850b`.
+  - Manual rows produced 3 units, 3 active owners, `$200` total balances, and 33% collection rate.
+  - Manual rules produced 1 ready knowledge source named `Manual onboarding rules`.
+- Dashboard live mode for manual community: pass.
+  - Agent status was `ready`.
+  - Knowledge source count was 1.
+  - Metrics reflected the manual setup data.
+- Agent API grounding checks from manual rules: pass.
+  - Pet rules question returned the two-pet/leash answer with `Manual onboarding rules` citation.
+  - Quiet hours question returned `10:00 PM to 7:00 AM` with `Manual onboarding rules` citation.
+  - Mortgage lender recommendation was flagged out of scope and returned no citations.
+
 Issues found and fixed:
 
 - CSV processing worked, but the upload file picker did not advertise `.csv` in `accept`. Fixed by adding `.csv` to the onboarding upload input and copy.
 - In-app browser file chooser automation failed once with `No node found for given backend id`; backend API ingestion was used as the reliable QA fallback. Manual user-browser upload should still be re-checked before a release rehearsal.
+- Dev backend deploy scripts default to `BEDROCK_MODEL_ID=disabled`; set `BEDROCK_MODEL_ID=amazon.nova-micro-v1:0` when deploying QA environments that need full agent answers.
 
 Not covered in this run:
 
