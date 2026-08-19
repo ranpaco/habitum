@@ -1,0 +1,22 @@
+{
+  "startedAt": "2026-08-19T01:32:35.511Z",
+  "captures": [
+    {
+      "name": "dashboard-live-manual-api.png",
+      "url": "https://dagh1t5lzacso.cloudfront.net/#dashboard?communityId=com_046b0946-ef86-4473-bdcf-43ed277730f3",
+      "communityId": "com_046b0946-ef86-4473-bdcf-43ed277730f3",
+      "sampleBannerVisible": false,
+      "agentVisible": true,
+      "totalUnitsVisible": true
+    },
+    {
+      "name": "dashboard-live-upload-api.png",
+      "url": "https://dagh1t5lzacso.cloudfront.net/#dashboard?communityId=com_d597b332-cd2d-4826-b92b-a79bf9f30033",
+      "communityId": "com_d597b332-cd2d-4826-b92b-a79bf9f30033",
+      "sampleBannerVisible": false,
+      "agentVisible": true,
+      "totalUnitsVisible": true
+    }
+  ],
+  "finishedAt": "2026-08-19T01:32:45.222Z"
+}

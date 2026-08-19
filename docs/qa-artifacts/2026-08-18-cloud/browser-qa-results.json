@@ -1,0 +1,124 @@
+{
+  "baseUrl": "https://dagh1t5lzacso.cloudfront.net",
+  "startedAt": "2026-08-19T01:28:43.244Z",
+  "flows": [
+    {
+      "name": "Landing desktop smoke",
+      "status": "PASS",
+      "startedAt": "2026-08-19T01:28:43.244Z",
+      "finishedAt": "2026-08-19T01:28:52.429Z",
+      "evidence": "landing-desktop.png",
+      "assertions": [
+        "Habitum visible",
+        "page loaded"
+      ]
+    },
+    {
+      "name": "Landing mobile smoke",
+      "status": "PASS",
+      "startedAt": "2026-08-19T01:28:52.429Z",
+      "finishedAt": "2026-08-19T01:28:53.025Z",
+      "evidence": "landing-mobile.png",
+      "assertions": [
+        "Habitum visible mobile",
+        "responsive route loaded"
+      ]
+    },
+    {
+      "name": "Demo request form",
+      "status": "FAIL",
+      "startedAt": "2026-08-19T01:28:53.025Z",
+      "finishedAt": "2026-08-19T01:28:53.797Z",
+      "error": "Error: Unable to translate Input.dispatchMouseEvent in the in-app browser: No element found at point 940,915\nwaiting on click for selector button[type=\"submit\"]\nError: Unable to translate Input.dispatchMouseEvent in the in-app browser: No element found at point 940,915\n    at WC (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:16372)\n    at vi.executeAgentCommand (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2492)\n    at async vi.send (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:519)\n    at async e.click (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:65:1743)\n    at async Promise.all (index 1)\n    at async /Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_1.mjs:80:5\n    at async flow (/Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_1.mjs:32:18)\n    at async /Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_1.mjs:62:1"
+    },
+    {
+      "name": "Manual onboarding to live dashboard",
+      "status": "FAIL",
+      "startedAt": "2026-08-19T01:28:53.797Z",
+      "finishedAt": "2026-08-19T01:29:10.033Z",
+      "error": "TypeError: page.url is not a function\n    at /Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_1.mjs:124:18\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async flow (/Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_1.mjs:32:18)\n    at async /Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_1.mjs:91:1"
+    },
+    {
+      "name": "Dashboard sample route",
+      "status": "PASS",
+      "startedAt": "2026-08-19T01:29:10.033Z",
+      "finishedAt": "2026-08-19T01:29:13.214Z",
+      "evidence": "dashboard-sample.png",
+      "assertions": [
+        "sample dashboard route loads",
+        "sample data banner visible"
+      ]
+    },
+    {
+      "name": "Dashboard sample mobile",
+      "status": "PASS",
+      "startedAt": "2026-08-19T01:29:13.214Z",
+      "finishedAt": "2026-08-19T01:29:16.357Z",
+      "evidence": "dashboard-mobile.png",
+      "assertions": [
+        "mobile dashboard loads"
+      ]
+    },
+    {
+      "name": "Demo request + scheduling",
+      "status": "FAIL",
+      "startedAt": "2026-08-19T01:29:56.055Z",
+      "finishedAt": "2026-08-19T01:29:56.897Z",
+      "error": "Error: TypeError: document.querySelector(...)?.requestSubmit is not a function\n    at __playwrightEvaluate (<anonymous>:2641:69)\n    at <anonymous>:2642:14\n    at runUserScript (<anonymous>:2643:10)\n    at <anonymous>:2647:10\n    at <anonymous>:2648:3\n    at Ak (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3200:379)\n    at /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:554:654\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async Lm (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22054)\n    at async /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22316\n    at async Du (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22292)\n    at async n (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:73:463)\n    at async /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2235\n    at async Object.run (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:128:58133)\n    at async vi.executeAgentCommand (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2149)"
+    },
+    {
+      "name": "Manual onboarding to live dashboard + agent",
+      "status": "FAIL",
+      "startedAt": "2026-08-19T01:29:56.897Z",
+      "finishedAt": "2026-08-19T01:30:00.589Z",
+      "error": "Error: TypeError: document.querySelector(...)?.requestSubmit is not a function\n    at __playwrightEvaluate (<anonymous>:2641:69)\n    at <anonymous>:2642:14\n    at runUserScript (<anonymous>:2643:10)\n    at <anonymous>:2647:10\n    at <anonymous>:2648:3\n    at Ak (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3200:379)\n    at /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:554:654\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async Lm (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22054)\n    at async /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22316\n    at async Du (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22292)\n    at async n (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:73:463)\n    at async /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2235\n    at async Object.run (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:128:58133)\n    at async vi.executeAgentCommand (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2149)"
+    },
+    {
+      "name": "Demo request + scheduling DOM click",
+      "status": "FAIL",
+      "startedAt": "2026-08-19T01:30:27.980Z",
+      "finishedAt": "2026-08-19T01:30:28.900Z",
+      "error": "Error: TypeError: btn.click is not a function\n    at __playwrightEvaluate (<anonymous>:2641:269)\n    at <anonymous>:2642:14\n    at runUserScript (<anonymous>:2643:10)\n    at <anonymous>:2647:10\n    at <anonymous>:2648:3\n    at Ak (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3200:379)\n    at /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:554:654\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async Lm (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22054)\n    at async /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22316\n    at async Du (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22292)\n    at async n (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:73:463)\n    at async /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2235\n    at async Object.run (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:128:58133)\n    at async vi.executeAgentCommand (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2149)"
+    },
+    {
+      "name": "Manual onboarding DOM click + agent",
+      "status": "FAIL",
+      "startedAt": "2026-08-19T01:30:28.900Z",
+      "finishedAt": "2026-08-19T01:30:32.464Z",
+      "error": "Error: TypeError: btn.click is not a function\n    at __playwrightEvaluate (<anonymous>:2641:269)\n    at <anonymous>:2642:14\n    at runUserScript (<anonymous>:2643:10)\n    at <anonymous>:2647:10\n    at <anonymous>:2648:3\n    at Ak (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3200:379)\n    at /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:554:654\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async Lm (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22054)\n    at async /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22316\n    at async Du (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22292)\n    at async n (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:73:463)\n    at async /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2235\n    at async Object.run (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:128:58133)\n    at async vi.executeAgentCommand (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2149)"
+    },
+    {
+      "name": "Demo request keyboard submit",
+      "status": "FAIL",
+      "startedAt": "2026-08-19T01:30:51.042Z",
+      "finishedAt": "2026-08-19T01:30:57.800Z",
+      "error": "Error: Submit by keyboard did not reach scheduling screen\n    at /Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_4.mjs:55:125\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async flow4 (/Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_4.mjs:45:85)\n    at async /Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_4.mjs:48:1"
+    },
+    {
+      "name": "Manual onboarding keyboard submit",
+      "status": "FAIL",
+      "startedAt": "2026-08-19T01:30:57.800Z",
+      "finishedAt": "2026-08-19T01:31:06.500Z",
+      "error": "Error: Keyboard submit did not reach Step 2\n    at /Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_4.mjs:65:87\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async flow4 (/Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_4.mjs:45:85)\n    at async /Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_4.mjs:59:1"
+    }
+  ],
+  "screenshots": [
+    "landing-desktop.png",
+    "landing-mobile.png",
+    "demo-form-filled.png",
+    "onboarding-manual-filled.png",
+    "dashboard-live-manual.png",
+    "dashboard-sample.png",
+    "dashboard-mobile.png",
+    "demo-form-filled-rerun.png",
+    "demo-form-filled-dom.png",
+    "onboarding-step1-filled-dom.png",
+    "demo-form-filled-keyboard.png",
+    "demo-scheduling-screen-keyboard.png",
+    "onboarding-step1-filled-keyboard.png"
+  ],
+  "finishedAt": "2026-08-19T01:31:06.500Z",
+  "rerunAt": "2026-08-19T01:29:56.055Z",
+  "domRerunAt": "2026-08-19T01:30:27.980Z",
+  "keyboardRerunAt": "2026-08-19T01:30:51.042Z"
+}

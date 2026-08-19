@@ -1,0 +1,77 @@
+{
+  "startedAt": "2026-08-19T01:32:14.599Z",
+  "api": "https://6n33xvteq7.execute-api.us-east-1.amazonaws.com",
+  "flows": [
+    {
+      "name": "Demo request API",
+      "status": "PASS",
+      "startedAt": "2026-08-19T01:32:14.600Z",
+      "finishedAt": "2026-08-19T01:32:15.924Z",
+      "demoRequestId": "dr_68fb1c08-3a2a-42ef-899d-3a6e5b0c0e0f",
+      "email": "qa+formal-demo-1787103134599@example.com"
+    },
+    {
+      "name": "Manual onboarding API + dashboard + agent",
+      "status": "PASS",
+      "startedAt": "2026-08-19T01:32:15.924Z",
+      "finishedAt": "2026-08-19T01:32:18.651Z",
+      "sessionId": "obs_f0c8252b-97fd-4a67-900e-ebe3d50fb6f7",
+      "communityId": "com_046b0946-ef86-4473-bdcf-43ed277730f3",
+      "email": "qa+formal-manual-1787103134599@example.com",
+      "summary": {
+        "unitsFound": 3,
+        "ownersFound": 3,
+        "totalBalances": 200.5,
+        "collectionRate": 33,
+        "documentsFound": 1,
+        "rowsProcessed": 3
+      },
+      "metrics": {
+        "totalUnits": 3,
+        "activeOwners": 3,
+        "totalBalances": 200.5,
+        "collectionRate": 33
+      },
+      "petCitations": 1,
+      "outOfScope": true
+    },
+    {
+      "name": "Upload onboarding API CSV+PDF + dashboard + agent",
+      "status": "PASS",
+      "startedAt": "2026-08-19T01:32:18.651Z",
+      "finishedAt": "2026-08-19T01:32:25.265Z",
+      "sessionId": "obs_6d225bb3-a17d-475e-8de1-aaccd0f7d6cb",
+      "communityId": "com_d597b332-cd2d-4826-b92b-a79bf9f30033",
+      "email": "qa+formal-upload-1787103134599@example.com",
+      "uploadedFiles": [
+        "onboarding-units.csv",
+        "hoa-regulations.pdf"
+      ],
+      "processedSummary": {
+        "unitsFound": 3,
+        "ownersFound": 3,
+        "totalBalances": 400,
+        "collectionRate": 33,
+        "documentsFound": 1,
+        "rowsProcessed": 3
+      },
+      "reviewedSummary": {
+        "unitsFound": 3,
+        "ownersFound": 3,
+        "totalBalances": 400,
+        "collectionRate": 33,
+        "documentsFound": 1,
+        "rowsProcessed": 3
+      },
+      "metrics": {
+        "totalUnits": 3,
+        "activeOwners": 3,
+        "totalBalances": 400,
+        "collectionRate": 33
+      },
+      "petCitations": 2,
+      "outOfScope": true
+    }
+  ],
+  "finishedAt": "2026-08-19T01:32:25.265Z"
+}

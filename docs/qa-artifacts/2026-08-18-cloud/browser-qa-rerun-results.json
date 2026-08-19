@@ -1,0 +1,23 @@
+{
+  "baseUrl": "https://dagh1t5lzacso.cloudfront.net",
+  "startedAt": "2026-08-19T01:29:56.055Z",
+  "flows": [
+    {
+      "name": "Demo request + scheduling",
+      "status": "FAIL",
+      "startedAt": "2026-08-19T01:29:56.055Z",
+      "finishedAt": "2026-08-19T01:29:56.897Z",
+      "error": "Error: TypeError: document.querySelector(...)?.requestSubmit is not a function\n    at __playwrightEvaluate (<anonymous>:2641:69)\n    at <anonymous>:2642:14\n    at runUserScript (<anonymous>:2643:10)\n    at <anonymous>:2647:10\n    at <anonymous>:2648:3\n    at Ak (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3200:379)\n    at /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:554:654\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async Lm (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22054)\n    at async /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22316\n    at async Du (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22292)\n    at async n (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:73:463)\n    at async /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2235\n    at async Object.run (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:128:58133)\n    at async vi.executeAgentCommand (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2149)"
+    },
+    {
+      "name": "Manual onboarding to live dashboard + agent",
+      "status": "FAIL",
+      "startedAt": "2026-08-19T01:29:56.897Z",
+      "finishedAt": "2026-08-19T01:30:00.589Z",
+      "error": "Error: TypeError: document.querySelector(...)?.requestSubmit is not a function\n    at __playwrightEvaluate (<anonymous>:2641:69)\n    at <anonymous>:2642:14\n    at runUserScript (<anonymous>:2643:10)\n    at <anonymous>:2647:10\n    at <anonymous>:2648:3\n    at Ak (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3200:379)\n    at /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:554:654\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async Lm (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22054)\n    at async /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22316\n    at async Du (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:72:22292)\n    at async n (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:73:463)\n    at async /Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2235\n    at async Object.run (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:128:58133)\n    at async vi.executeAgentCommand (/Users/rafaelpalma/.codex/plugins/cache/openai-bundled/browser/26.727.51351/scripts/browser-client.mjs:3227:2149)"
+    }
+  ],
+  "screenshots": [
+    "demo-form-filled-rerun.png"
+  ]
+}

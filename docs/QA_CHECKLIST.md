@@ -345,6 +345,48 @@ Cloud deployment QA pass:
 - User manual smoke test on cloud: pass.
   - User reported the deployed site was tested and looked good.
 
+Formal cloud QA pass - 2026-08-18 local / 2026-08-19 UTC:
+
+- Evidence directory: `docs/qa-artifacts/2026-08-18-cloud`.
+- Formal report: `docs/qa-artifacts/2026-08-18-cloud/QA_REPORT.md`.
+- `npm run build`: pass.
+- Latest GitHub Actions `Build`: pass.
+  - Run: `https://github.com/ranpaco/habitum/actions/runs/32204846214`.
+  - Commit: `3efe7e97353fcd098174ac44cfd6d3819f390028`.
+- Latest GitHub Actions `Deploy Dev`: pass.
+  - Run: `https://github.com/ranpaco/habitum/actions/runs/32204846263`.
+  - Commit: `3efe7e97353fcd098174ac44cfd6d3819f390028`.
+- CloudFront site freshness: pass.
+  - URL: `https://dagh1t5lzacso.cloudfront.net`.
+  - HTTP status: `200`.
+  - Served title: `Habitum | AI HOA Management Software`.
+- Browser visual smoke checks: pass.
+  - Landing desktop screenshot: `landing-desktop.png`.
+  - Landing mobile screenshot: `landing-mobile.png`.
+  - Dashboard sample desktop screenshot: `dashboard-sample.png`.
+  - Dashboard sample mobile screenshot: `dashboard-mobile.png`.
+  - Live manual dashboard screenshot: `dashboard-live-manual-api.png`.
+  - Live upload dashboard screenshot: `dashboard-live-upload-api.png`.
+- Demo request API with fake data: pass.
+  - Demo request: `dr_68fb1c08-3a2a-42ef-899d-3a6e5b0c0e0f`.
+- Manual onboarding API with fake data: pass.
+  - Session: `obs_f0c8252b-97fd-4a67-900e-ebe3d50fb6f7`.
+  - Community: `com_046b0946-ef86-4473-bdcf-43ed277730f3`.
+  - Dashboard metrics: 3 units, 3 active owners, `$200.50` balances, 33% collection rate.
+  - Agent pet-rule answer: pass with 1 citation.
+  - Agent mortgage-lender out-of-scope check: pass.
+- Upload onboarding API with fake CSV + PDF fixtures: pass.
+  - Session: `obs_6d225bb3-a17d-475e-8de1-aaccd0f7d6cb`.
+  - Community: `com_d597b332-cd2d-4826-b92b-a79bf9f30033`.
+  - Files: `onboarding-units.csv`, `hoa-regulations.pdf`.
+  - Dashboard metrics: 3 units, 3 active owners, `$400.00` balances, 33% collection rate.
+  - Agent pet-rule answer: pass with 2 citations.
+  - Agent mortgage-lender out-of-scope check: pass.
+- In-app browser limitation observed:
+  - The browser captured screenshots successfully.
+  - Submit-heavy flows could not be completed through the browser wrapper because click translation and DOM submit/click helpers failed in this session.
+  - Product behavior for those paths was validated through the real backend API and then visually opened in live cloud dashboard URLs.
+
 Issues found and fixed:
 
 - CSV processing worked, but the upload file picker did not advertise `.csv` in `accept`. Fixed by adding `.csv` to the onboarding upload input and copy.
@@ -354,12 +396,14 @@ Issues found and fixed:
 
 Not covered in this run:
 
-- Mobile responsive screenshots.
-- Formal cloud QA screenshots.
+- Full click-through of demo scheduling in a normal end-user browser.
+- Full click-through of onboarding submit buttons in a normal end-user browser.
+- Native browser file picker upload from the CloudFront UI.
 
 Next QA recommendations:
 
-- Capture screenshots for desktop and mobile widths on the CloudFront URL.
-- Re-run both onboarding branches manually in a regular browser on CloudFront before a customer-facing demo:
+- Re-run submit-heavy flows manually in a regular Chrome/Safari browser on CloudFront before a customer-facing demo:
+  - demo request and scheduling;
   - upload path with CSV + PDF;
   - manual setup path with typed units and rules.
+- Keep `docs/qa-artifacts/2026-08-18-cloud/QA_REPORT.md` as the baseline formal QA report for the next cloud run.

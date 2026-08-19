@@ -1,0 +1,25 @@
+{
+  "baseUrl": "https://dagh1t5lzacso.cloudfront.net",
+  "startedAt": "2026-08-19T01:30:51.042Z",
+  "flows": [
+    {
+      "name": "Demo request keyboard submit",
+      "status": "FAIL",
+      "startedAt": "2026-08-19T01:30:51.042Z",
+      "finishedAt": "2026-08-19T01:30:57.800Z",
+      "error": "Error: Submit by keyboard did not reach scheduling screen\n    at /Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_4.mjs:55:125\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async flow4 (/Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_4.mjs:45:85)\n    at async /Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_4.mjs:48:1"
+    },
+    {
+      "name": "Manual onboarding keyboard submit",
+      "status": "FAIL",
+      "startedAt": "2026-08-19T01:30:57.800Z",
+      "finishedAt": "2026-08-19T01:31:06.500Z",
+      "error": "Error: Keyboard submit did not reach Step 2\n    at /Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_4.mjs:65:87\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async flow4 (/Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_4.mjs:45:85)\n    at async /Users/rafaelpalma/Develop/habitum-web/.node_repl_cell_4.mjs:59:1"
+    }
+  ],
+  "screenshots": [
+    "demo-form-filled-keyboard.png",
+    "demo-scheduling-screen-keyboard.png",
+    "onboarding-step1-filled-keyboard.png"
+  ]
+}
