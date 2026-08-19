@@ -12,6 +12,12 @@ Routes to verify:
 - `#dashboard`: dashboard sample mode.
 - `#dashboard?communityId=<id>`: dashboard live mode.
 
+Cloud QA URL:
+
+```text
+https://dagh1t5lzacso.cloudfront.net
+```
+
 Validation command:
 
 ```bash
@@ -175,13 +181,63 @@ Expected:
 - Failed load falls back to sample data and shows `Retry Live Data`.
 - Agent questions are enabled only when live data is active.
 
+## Cloud QA Runbook
+
+Environment:
+
+- Site: `https://dagh1t5lzacso.cloudfront.net`.
+- Backend: `https://6n33xvteq7.execute-api.us-east-1.amazonaws.com`.
+- Deployment: GitHub Actions `Deploy Dev` on push to `main`.
+- Use fake QA data only.
+
+Manual coverage before a customer-facing demo:
+
+- Landing page:
+  - Open `/`.
+  - Verify Habitum metadata/title, hero, CTA, pricing, FAQ, region selector, and footer.
+  - Verify CTA navigation to `#demo` and `#onboarding`.
+- Demo request:
+  - Open `/#demo`.
+  - Verify empty-submit validation.
+  - Submit fake lead data.
+  - Verify scheduling screen, date/time selection, and confirmation.
+- Upload onboarding:
+  - Open `/#onboarding`.
+  - Complete account/community with fake data.
+  - Select `Upload existing files`.
+  - Upload `docs/qa-fixtures/onboarding-units.csv`.
+  - Optionally upload `docs/qa-fixtures/hoa-regulations.pdf`.
+  - Verify processing, review table, dashboard navigation, metrics, and agent status.
+- Manual onboarding:
+  - Open `/#onboarding`.
+  - Complete account/community with fake data.
+  - Select `Manual setup`.
+  - Add/edit/delete unit rows.
+  - Add starter rules.
+  - Submit and verify live dashboard metrics.
+  - Ask agent about a manual rule and verify citation to `Manual onboarding rules`.
+- Dashboard:
+  - Open `/#dashboard`.
+  - Verify sample mode and disabled live agent behavior.
+  - Open a live dashboard URL from each onboarding path.
+  - Verify no sample banner, metrics, recent payments, agent ready state, citations, and out-of-scope response.
+- Responsive:
+  - Capture desktop screenshot.
+  - Capture mobile screenshot.
+  - Verify no text overlap or broken controls in onboarding and dashboard.
+- Observability:
+  - Check browser console for errors.
+  - Record community IDs created during QA.
+  - Confirm latest GitHub Actions deploy is green.
+
 ## Current QA Run
 
-Date: 2026-08-12, 2026-08-16, and 2026-08-17.
+Date: 2026-08-12, 2026-08-16, 2026-08-17, and 2026-08-18.
 
 Environment:
 
 - Local Vite server at `http://127.0.0.1:5173/`.
+- CloudFront dev site at `https://dagh1t5lzacso.cloudfront.net`.
 - Browser: Codex in-app browser.
 - Backend side-effect flows were submitted with fake QA data only.
 
@@ -276,19 +332,34 @@ Manual onboarding integrated QA pass:
   - Quiet hours question returned `10:00 PM to 7:00 AM` with `Manual onboarding rules` citation.
   - Mortgage lender recommendation was flagged out of scope and returned no citations.
 
+Cloud deployment QA pass:
+
+- GitHub Actions `Deploy Dev`: pass.
+  - Run: `https://github.com/ranpaco/habitum/actions/runs/32066104213`.
+  - Backend deploy step: pass.
+  - Web deploy step: pass.
+- CloudFront site freshness: pass.
+  - URL: `https://dagh1t5lzacso.cloudfront.net`.
+  - Served title: `Habitum | AI HOA Management Software`.
+  - Served assets updated on 2026-08-17.
+- User manual smoke test on cloud: pass.
+  - User reported the deployed site was tested and looked good.
+
 Issues found and fixed:
 
 - CSV processing worked, but the upload file picker did not advertise `.csv` in `accept`. Fixed by adding `.csv` to the onboarding upload input and copy.
 - In-app browser file chooser automation failed once with `No node found for given backend id`; backend API ingestion was used as the reliable QA fallback. Manual user-browser upload should still be re-checked before a release rehearsal.
 - Dev backend deploy scripts default to `BEDROCK_MODEL_ID=disabled`; set `BEDROCK_MODEL_ID=amazon.nova-micro-v1:0` when deploying QA environments that need full agent answers.
+- First continuous deployment run failed during AWS credential/deploy setup; fixed by removing GitHub environment-subject mismatch and letting deploy scripts use the default OIDC credential chain in GitHub Actions.
 
 Not covered in this run:
 
 - Mobile responsive screenshots.
+- Formal cloud QA screenshots.
 
 Next QA recommendations:
 
-- Capture screenshots for desktop and mobile widths.
-- Re-run both onboarding branches manually in a regular browser before a customer-facing demo:
+- Capture screenshots for desktop and mobile widths on the CloudFront URL.
+- Re-run both onboarding branches manually in a regular browser on CloudFront before a customer-facing demo:
   - upload path with CSV + PDF;
   - manual setup path with typed units and rules.

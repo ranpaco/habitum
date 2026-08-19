@@ -2,7 +2,7 @@
 
 Este roadmap separa lo que existe hoy, lo que falta para un demo funcional y lo que falta para convertir el sitio en producto SaaS real.
 
-Actualizado: 2026-08-16.
+Actualizado: 2026-08-18.
 
 ## Estado Actual
 
@@ -26,27 +26,41 @@ Actualizado: 2026-08-16.
   - respuestas con citas cuando hay evidencia;
   - gate de alcance para bloquear preguntas fuera de la comunidad administrada.
 - Infra AWS dev documentada para API Gateway, Lambda, DynamoDB, S3, Textract, Bedrock y CloudFront/S3 web deploy.
+- Frontend dev publicado en CloudFront/S3:
+  - URL: `https://dagh1t5lzacso.cloudfront.net`;
+  - bucket: `habitum-dev-web-917925998251-us-east-1`;
+  - CloudFront distribution: `E2UIQH60WUG0WV`.
+- Continuous deployment dev activo con GitHub Actions:
+  - build frontend en cada push/PR;
+  - deploy backend y web en cada push a `main`;
+  - autenticacion AWS via OIDC con rol `habitum-dev-github-actions-deploy`.
 - Repositorio Git inicializado y publicado en `git@github.com:ranpaco/habitum.git`.
 
 ## Siguiente Hito Recomendado
 
-Objetivo: dejar el MVP demo mas confiable antes de construir nuevas funcionalidades grandes.
+Objetivo: cerrar una ronda formal de QA en nube y limpiar deuda pequena antes de construir nuevas funcionalidades grandes.
 
-- Agregar GitHub Actions para validar `npm install` y `npm run build` en cada push/PR.
-- Revisar vulnerabilidades con `npm audit` en raiz y en `server/lambda/habitum-api/`.
-- Separar claramente datos reales, fallback demo y mocks visuales. **Iniciado: fallback de dashboard movido a `src/app/mocks/`.**
-- Mejorar estados de UX del demo. **Iniciado: retry en demo request, upload, procesamiento y dashboard live.**
-  - carga;
-  - error;
-  - reintento;
-  - confirmaciones de exito;
-  - mensajes cuando no hay `communityId`.
-- Hacer una prueba manual completa de rutas:
+- QA manual completo en la URL cloud `https://dagh1t5lzacso.cloudfront.net`:
   - `#`;
   - `#demo`;
-  - `#onboarding`;
-  - `#dashboard`.
-- Documentar en README el flujo local completo, despliegue dev y limitaciones actuales del MVP.
+  - `#onboarding` por upload CSV + PDF;
+  - `#onboarding` por setup manual;
+  - `#dashboard`;
+  - `#dashboard?communityId=<id>`;
+  - agente IA con preguntas in-scope y out-of-scope.
+- Capturar evidencia de QA:
+  - screenshots desktop;
+  - screenshots mobile;
+  - notas de consola/errores;
+  - comunidades QA creadas.
+- Revisar vulnerabilidades con `npm audit` en raiz y en `server/lambda/habitum-api/`.
+- Cerrar deuda de paquete: eliminar o justificar `pnpm-workspace.yaml` si npm sigue siendo el gestor oficial.
+- Actualizar `README.md` con:
+  - URL cloud dev;
+  - comandos locales;
+  - flujo de deploy automatico;
+  - limitaciones actuales del MVP.
+- Siguiente feature comercial recomendada despues de QA: notificaciones internas para `POST /api/demo-requests`.
 
 ## Prioridad 0: Orden Del Proyecto
 
@@ -54,7 +68,8 @@ Objetivo: dejar el MVP demo mas confiable antes de construir nuevas funcionalida
 - Decidir gestor oficial de paquetes: `npm`, `pnpm` o `yarn`. **Decision actual: npm, porque existe `package-lock.json`. Pendiente: eliminar o justificar `pnpm-workspace.yaml`.**
 - Inicializar Git si este directorio sera la fuente principal del proyecto. **Completado: repo publicado en GitHub.**
 - Definir variables de entorno esperadas en un `.env.example`. **Completado para `VITE_API_BASE_URL`.**
-- Agregar CI basico con GitHub Actions para build de frontend.
+- Agregar CI basico con GitHub Actions para build de frontend. **Completado.**
+- Agregar continuous deployment dev con GitHub Actions + AWS OIDC. **Completado.**
 - Crear una convencion para datos mock, por ejemplo `src/app/mocks/`. **Iniciado con `src/app/mocks/dashboard.ts`.**
 - Mover textos comerciales hardcodeados a configuraciones regionales cuando aplique.
 - Definir si el idioma por defecto sera espanol, ingles o dependiente de region.
@@ -69,7 +84,11 @@ Avance actual:
 
 - Perfil AWS no-root `habitum-dev` verificado.
 - Stack dev `habitum-dev-backend` creado en AWS.
+- Stack dev `habitum-dev-web` creado en AWS.
+- Stack dev `habitum-dev-github-oidc` creado en AWS.
 - API Gateway + Lambda + DynamoDB + S3 desplegados.
+- CloudFront + S3 web deploy activo y verificado.
+- GitHub Actions `Deploy Dev` verificado con deploy exitoso de backend y web.
 - `GET /api/health` probado correctamente.
 - `POST /api/demo-requests` probado correctamente con escritura en DynamoDB.
 - Endpoints base de onboarding y dashboard probados correctamente.
