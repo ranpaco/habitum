@@ -2,7 +2,7 @@
 
 Este roadmap separa lo que existe hoy, lo que falta para un demo funcional y lo que falta para convertir el sitio en producto SaaS real.
 
-Actualizado: 2026-08-18.
+Actualizado: 2026-08-19.
 
 ## Estado Actual
 
@@ -38,29 +38,28 @@ Actualizado: 2026-08-18.
 
 ## Siguiente Hito Recomendado
 
-Objetivo: cerrar una ronda formal de QA en nube y limpiar deuda pequena antes de construir nuevas funcionalidades grandes.
+Objetivo: convertir el dashboard de demo en una consola funcional para administradores, usando las comunidades creadas por onboarding como datos reales.
 
-- QA manual completo en la URL cloud `https://dagh1t5lzacso.cloudfront.net`:
-  - `#`;
-  - `#demo`;
-  - `#onboarding` por upload CSV + PDF;
-  - `#onboarding` por setup manual;
-  - `#dashboard`;
-  - `#dashboard?communityId=<id>`;
-  - agente IA con preguntas in-scope y out-of-scope.
-- Capturar evidencia de QA:
-  - screenshots desktop;
-  - screenshots mobile;
-  - notas de consola/errores;
-  - comunidades QA creadas.
-- Revisar vulnerabilidades con `npm audit` en raiz y en `server/lambda/habitum-api/`.
-- Cerrar deuda de paquete: eliminar o justificar `pnpm-workspace.yaml` si npm sigue siendo el gestor oficial.
-- Actualizar `README.md` con:
-  - URL cloud dev;
-  - comandos locales;
-  - flujo de deploy automatico;
-  - limitaciones actuales del MVP.
-- Siguiente feature comercial recomendada despues de QA: notificaciones internas para `POST /api/demo-requests`.
+- Crear una version 1 del dashboard operativo:
+  - tabla real de unidades/propietarios con busqueda, filtros y estados de saldo;
+  - detalle de unidad/propietario con balance, contacto, notas y actividad;
+  - acciones funcionales para `Add Owner`, `Record Payment`, `Configure Agent` y `View Reports`;
+  - panel de documentos/reglas cargadas con estado de procesamiento y fuente del agente;
+  - resumen financiero mas util: total pendiente, unidades al dia, unidades morosas, pagos recientes y tasa de cobranza.
+- Conectar el dashboard a nuevos endpoints backend de lectura/escritura:
+  - listar unidades;
+  - crear/editar propietarios;
+  - registrar pagos manuales;
+  - listar documentos/conocimiento;
+  - exponer actividad/auditoria basica.
+- Mantener QA continuo:
+  - extender `docs/QA_CHECKLIST.md` con flujos del dashboard funcional;
+  - agregar e2e smoke cuando exista framework de test;
+  - revalidar nube despues de cada cambio.
+- Deuda pequena que conviene cerrar en paralelo:
+  - revisar vulnerabilidades con `npm audit` en raiz y `server/lambda/habitum-api/`;
+  - eliminar o justificar `pnpm-workspace.yaml` si npm sigue siendo el gestor oficial;
+  - actualizar `README.md` con flujo de deploy, URL cloud y limitaciones actuales.
 
 ## Prioridad 0: Orden Del Proyecto
 
@@ -158,6 +157,121 @@ Avance actual:
   - carga de archivo;
   - solicitud de demo;
   - seleccion de plan.
+
+## Prioridad 2A: Dashboard Funcional Para Administradores
+
+Objetivo: que el dashboard deje de ser solo una vista de resumen y se convierta en el centro de trabajo del administrador despues del onboarding.
+
+Estado actual:
+
+- Dashboard carga datos reales cuando existe `communityId`.
+- Dashboard muestra metricas basicas: unidades, propietarios activos, saldos y tasa de cobranza.
+- Dashboard muestra pagos recientes derivados de datos importados/revisados.
+- Dashboard incluye agente IA conectado a documentos/reglas de la comunidad.
+- Quick actions existen visualmente, pero todavia no ejecutan flujos reales.
+- No existe aun una vista completa de unidades, propietarios, documentos, pagos, reportes ni actividad.
+
+Fase 1 - Utilidad inmediata del dashboard:
+
+- Reemplazar el hero de bienvenida por una barra de contexto operativa:
+  - comunidad activa;
+  - modo `sample` vs `live`;
+  - fecha de ultima actualizacion;
+  - acceso rapido a onboarding/importacion.
+- Mejorar metricas principales:
+  - total pendiente;
+  - total cobrado;
+  - unidades al dia;
+  - unidades morosas;
+  - tasa de cobranza;
+  - documentos indexados para el agente.
+- Crear tabla de unidades/propietarios:
+  - unidad;
+  - propietario/residente;
+  - saldo;
+  - estado: al dia, pendiente, moroso;
+  - ultima actividad;
+  - accion para abrir detalle.
+- Agregar busqueda y filtros:
+  - buscar por unidad o nombre;
+  - filtrar por estado de saldo;
+  - ordenar por saldo, unidad o propietario.
+- Crear panel de detalle de unidad:
+  - informacion del propietario/residente;
+  - balance actual;
+  - historial de pagos/importaciones;
+  - notas administrativas;
+  - preguntas sugeridas para el agente relacionadas con esa unidad.
+
+Fase 2 - Acciones reales:
+
+- Hacer funcional `Add Owner`:
+  - crear propietario/unidad desde el dashboard;
+  - validar campos requeridos;
+  - actualizar metricas sin recargar la pagina.
+- Hacer funcional `Record Payment`:
+  - registrar pago manual;
+  - soportar monto, moneda, metodo, fecha y referencia;
+  - recalcular saldos y tasa de cobranza;
+  - mostrar confirmacion y error recuperable.
+- Hacer funcional `Configure Agent`:
+  - listar fuentes de conocimiento;
+  - permitir editar reglas manuales iniciales;
+  - mostrar documentos procesados, pendientes y fallidos;
+  - exponer preguntas sugeridas configurables.
+- Hacer funcional `View Reports`:
+  - reporte de morosidad;
+  - reporte de cobranza;
+  - export CSV inicial;
+  - resumen imprimible para junta/board.
+
+Fase 3 - Backend/API requerido:
+
+- Extender `GET /api/communities/{communityId}/dashboard` para devolver:
+  - `units`;
+  - `owners`;
+  - `balances`;
+  - `payments`;
+  - `documents`;
+  - `activity`;
+  - `lastUpdatedAt`.
+- Crear endpoints:
+  - `GET /api/communities/{communityId}/units`;
+  - `POST /api/communities/{communityId}/units`;
+  - `PATCH /api/communities/{communityId}/units/{unitId}`;
+  - `POST /api/communities/{communityId}/payments`;
+  - `GET /api/communities/{communityId}/documents`;
+  - `PATCH /api/communities/{communityId}/agent/rules`;
+  - `GET /api/communities/{communityId}/reports/collections`.
+- Persistir auditoria minima:
+  - imports confirmados;
+  - unidades creadas/editadas;
+  - pagos registrados;
+  - reglas/documentos actualizados;
+  - preguntas al agente marcadas para revision humana.
+
+Fase 4 - UX y calidad:
+
+- Disenar estados vacios para comunidades nuevas sin datos.
+- Evitar fallback silencioso a sample data cuando existe un `communityId`; mostrar error claro y accion de retry.
+- Agregar responsive QA especifico para:
+  - tabla de unidades en mobile;
+  - detalle de unidad;
+  - formularios de acciones rapidas;
+  - panel del agente con citas largas.
+- Agregar tests/e2e cuando el framework este definido:
+  - dashboard sample;
+  - dashboard live;
+  - busqueda/filtros;
+  - registrar pago;
+  - crear propietario;
+  - agente con pregunta in-scope y out-of-scope.
+
+Primer slice recomendado:
+
+- Implementar frontend de tabla de unidades + filtros usando datos ya disponibles o mock extendido.
+- Luego extender el endpoint de dashboard para devolver unidades/propietarios normalizados.
+- Despues conectar `Record Payment`, porque es la accion que mas rapidamente demuestra valor operativo.
 
 ## Prioridad 3: Agente IA Y Base De Conocimiento
 
