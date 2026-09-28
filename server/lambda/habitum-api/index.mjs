@@ -699,12 +699,16 @@ async function getDashboard(communityId) {
     return response(404, { error: "community_not_found" });
   }
 
+  const baseCurrency = result.Item.baseCurrency?.S || "USD";
+  const lastUpdatedAt = result.Item.updatedAt?.S;
+  const extractedRows = parseJsonAttribute(result.Item.extractedRowsJson?.S, []);
+
   return response(200, {
     community: {
       id: communityId,
       name: result.Item.name?.S,
       country: result.Item.country?.S,
-      baseCurrency: result.Item.baseCurrency?.S,
+      baseCurrency,
       region: result.Item.region?.S,
     },
     metrics: {
@@ -714,6 +718,16 @@ async function getDashboard(communityId) {
       collectionRate: Number(result.Item.collectionRate?.N || 0),
     },
     recentPayments: parseJsonAttribute(result.Item.recentPaymentsJson?.S, []),
+    units: extractedRows.map((row, index) => ({
+      id: `${communityId}:${index}`,
+      unit: row.unit || "Unassigned",
+      owner: row.owner || "Unknown owner",
+      balance: Number(row.balance || 0),
+      currency: baseCurrency,
+      status: row.status === "paid" || Number(row.balance || 0) <= 0 ? "current" : row.status || "pending",
+      lastActivityAt: lastUpdatedAt,
+    })),
+    lastUpdatedAt,
     agent: {
       status: parseJsonAttribute(result.Item.knowledgeChunksJson?.S, []).length > 0 ? "ready" : "not_configured",
       knowledgeDocuments: parseJsonAttribute(result.Item.knowledgeDocumentsJson?.S, []).length,

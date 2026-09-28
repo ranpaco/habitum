@@ -181,6 +181,24 @@ Expected:
 - Failed load falls back to sample data and shows `Retry Live Data`.
 - Agent questions are enabled only when live data is active.
 
+## Flow 9: Administrator Unit Directory
+
+Routes: `#dashboard` and `#dashboard?communityId=<id>`
+
+Expected:
+
+- Operational header shows the community, sample/live mode, last update, and import action.
+- Live mode exposes a refresh action and keeps the current content visible while reloading.
+- Unit directory lists unit, owner/resident, balance, and balance status.
+- Search matches both unit identifier and owner/resident name without case sensitivity.
+- Status controls filter current, pending, and overdue units and show their counts.
+- Sort control orders by unit, owner, highest balance, and lowest balance.
+- A search/filter combination with no results shows an empty state and `Clear filters` restores the list.
+- Opening a unit shows owner/resident, balance, last activity, optional contact, and administrative notes.
+- Closing unit detail returns to the directory without resetting search, filter, or sort state.
+- Desktop renders a stable table and mobile renders a readable stacked list without horizontal page overflow.
+- Live communities created before this API change remain usable through the compatibility fallback.
+
 ## Cloud QA Runbook
 
 Environment:
@@ -221,6 +239,8 @@ Manual coverage before a customer-facing demo:
   - Verify sample mode and disabled live agent behavior.
   - Open a live dashboard URL from each onboarding path.
   - Verify no sample banner, metrics, recent payments, agent ready state, citations, and out-of-scope response.
+  - Verify unit search, each balance filter, all sort options, empty state, clear filters, and unit detail.
+  - In live mode, verify refresh updates the timestamp/data without switching to sample mode.
 - Responsive:
   - Capture desktop screenshot.
   - Capture mobile screenshot.

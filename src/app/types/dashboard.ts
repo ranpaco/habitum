@@ -1,3 +1,17 @@
+export type DashboardBalanceStatus = "current" | "pending" | "overdue" | string;
+
+export interface DashboardUnit {
+  id: string;
+  unit: string;
+  owner: string;
+  balance: number;
+  currency: string;
+  status: DashboardBalanceStatus;
+  lastActivityAt?: string;
+  contact?: string;
+  notes?: string;
+}
+
 export interface DashboardData {
   community: {
     id: string;
@@ -19,6 +33,8 @@ export interface DashboardData {
     currency: string;
     status: string;
   }>;
+  units?: DashboardUnit[];
+  lastUpdatedAt?: string;
   agent: {
     status: string;
     knowledgeDocuments: number;

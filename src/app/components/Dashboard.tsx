@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, Bot, Building2, CheckCircle, DollarSign, FileText, Send, Users } from "lucide-react";
+import { AlertCircle, Bot, Building2, CheckCircle, DollarSign, FileText, RefreshCw, Send, Upload, Users } from "lucide-react";
+import { UnitDirectory } from "./dashboard/UnitDirectory";
 import { fallbackDashboard } from "../mocks/dashboard";
 import { askCommunityAgent, getCommunityDashboard } from "../services/dashboard";
-import { AgentAskResponse, DashboardData } from "../types/dashboard";
+import { AgentAskResponse, DashboardData, DashboardUnit } from "../types/dashboard";
 
 const COMMUNITY_STORAGE_KEY = "habitum.communityId";
 
@@ -49,6 +50,7 @@ export function Dashboard() {
   const { community, metrics, recentPayments, agent } = dashboardData;
   const isSampleData = dataMode === "sample";
   const activeCommunityId = isSampleData ? null : community.id;
+  const units = getDashboardUnits(dashboardData);
 
   const askAgent = async (question: string) => {
     const trimmedQuestion = question.trim();
@@ -70,28 +72,28 @@ export function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-white">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-gray-50 to-white">
       {/* Header */}
       <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4">
+        <div className="mx-auto w-full max-w-7xl px-4 py-4 sm:px-6">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-[#1A365D] to-[#00A3BF] rounded-lg flex items-center justify-center">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#1A365D] to-[#00A3BF]">
                 <Building2 className="w-6 h-6 text-white" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <span className="text-xl font-bold text-[#1A365D]">Habitum</span>
-                <p className="text-xs text-gray-600">
+                <p className="truncate text-xs text-gray-600">
                   {community.name}{isSampleData ? " · sample data" : ""}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="text-right">
+            <div className="ml-3 flex shrink-0 items-center gap-3 sm:gap-4">
+              <div className="hidden text-right sm:block">
                 <p className="text-sm font-semibold text-[#1A365D]">Admin Dashboard</p>
                 <p className="text-xs text-gray-600">admin@condominium.com</p>
               </div>
-              <div className="w-10 h-10 bg-gradient-to-br from-[#00A3BF] to-[#1A365D] rounded-full flex items-center justify-center text-white font-bold">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#00A3BF] to-[#1A365D] font-bold text-white" title="Administrator account">
                 A
               </div>
             </div>
@@ -100,7 +102,7 @@ export function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 py-12">
+      <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
         {isLoading && (
           <div className="mb-6 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
             Loading live dashboard data...
@@ -127,28 +129,50 @@ export function Dashboard() {
         )}
 
         {isSampleData && (
-          <div className="mb-6 rounded-xl border border-[#00A3BF]/30 bg-[#00A3BF]/10 px-4 py-3 text-sm font-medium text-[#1A365D]">
+          <div className="mb-6 break-words rounded-xl border border-[#00A3BF]/30 bg-[#00A3BF]/10 px-4 py-3 text-sm font-medium text-[#1A365D]">
             Sample demo data is active. Complete onboarding or open a dashboard link with a communityId to load live data.
           </div>
         )}
 
-        {/* Welcome Banner */}
-        <div className="bg-gradient-to-r from-[#1A365D] to-[#00A3BF] rounded-3xl p-12 mb-12 text-white relative overflow-hidden">
-          <div className="relative z-10">
-            <h1 className="text-4xl font-bold mb-4">Welcome to Your Dashboard! 🎉</h1>
-            <p className="text-xl text-white/90 mb-6">
-              {community.name} is now ready for the Habitum demo workspace.
-            </p>
-            <button className="bg-white text-[#1A365D] px-6 py-3 rounded-xl font-semibold hover:shadow-xl transition-all">
-              Take a Quick Tour
-            </button>
+        {/* Operational Context */}
+        <section className="mb-8 border-b border-gray-200 pb-6" aria-labelledby="dashboard-title">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${isSampleData ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}`}>
+                  {isSampleData ? "Sample workspace" : "Live workspace"}
+                </span>
+                <span className="text-xs text-gray-500">Updated {formatDateTime(dashboardData.lastUpdatedAt)}</span>
+              </div>
+              <h1 id="dashboard-title" className="text-3xl font-bold text-[#1A365D]">{community.name}</h1>
+              <p className="mt-2 text-sm text-gray-600">Community operations overview</p>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              {!isSampleData && activeCommunityId && (
+                <button
+                  type="button"
+                  onClick={() => loadLiveDashboard(activeCommunityId)}
+                  disabled={isLoading}
+                  className="inline-flex h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold text-[#1A365D] hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                  Refresh
+                </button>
+              )}
+              <a
+                href="#onboarding"
+                className="inline-flex h-10 items-center gap-2 rounded-lg bg-[#00A3BF] px-4 text-sm font-semibold text-white hover:bg-[#008CA3]"
+              >
+                <Upload className="h-4 w-4" />
+                Import data
+              </a>
+            </div>
           </div>
-          <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
-          <div className="absolute bottom-0 left-1/3 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
-        </div>
+        </section>
 
         {/* Stats Grid */}
-        <div className="grid md:grid-cols-4 gap-6 mb-12">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-8">
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
             <div className="flex items-center justify-between mb-4">
               <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
@@ -156,7 +180,7 @@ export function Dashboard() {
               </div>
             </div>
             <div className="text-3xl font-bold text-[#1A365D] mb-1">{metrics.totalUnits}</div>
-            <div className="text-gray-600 text-sm">Total Units</div>
+            <div className="text-gray-600 text-sm">Total units</div>
           </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
@@ -166,7 +190,7 @@ export function Dashboard() {
               </div>
             </div>
             <div className="text-3xl font-bold text-[#1A365D] mb-1">{metrics.activeOwners}</div>
-            <div className="text-gray-600 text-sm">Active Owners</div>
+            <div className="text-gray-600 text-sm">Active owners</div>
           </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
@@ -176,7 +200,7 @@ export function Dashboard() {
               </div>
             </div>
             <div className="text-3xl font-bold text-green-600 mb-1">{formatMoney(metrics.totalBalances, community.baseCurrency)}</div>
-            <div className="text-gray-600 text-sm">Total Balances</div>
+            <div className="text-gray-600 text-sm">Outstanding balance</div>
           </div>
 
           <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100">
@@ -186,9 +210,11 @@ export function Dashboard() {
               </div>
             </div>
             <div className="text-3xl font-bold text-[#1A365D] mb-1">{metrics.collectionRate}%</div>
-            <div className="text-gray-600 text-sm">Collection Rate</div>
+            <div className="text-gray-600 text-sm">Collection rate</div>
           </div>
         </div>
+
+        <UnitDirectory units={units} defaultCurrency={community.baseCurrency} />
 
         {/* Main Grid */}
         <div className="grid lg:grid-cols-2 gap-8">
@@ -379,4 +405,25 @@ function formatStatus(status: string) {
     .split("_")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function getDashboardUnits(data: DashboardData): DashboardUnit[] {
+  if (data.units?.length) return data.units;
+
+  return data.recentPayments.map((payment, index) => ({
+    id: `${data.community.id}:${payment.unit}:${index}`,
+    unit: payment.unit,
+    owner: payment.owner,
+    balance: payment.status === "completed" || payment.status === "paid" ? 0 : payment.amount,
+    currency: payment.currency || data.community.baseCurrency,
+    status: payment.status === "completed" || payment.status === "paid" ? "current" : "pending",
+    lastActivityAt: data.lastUpdatedAt,
+  }));
+}
+
+function formatDateTime(value?: string) {
+  if (!value) return "not available";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "not available";
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(date);
 }

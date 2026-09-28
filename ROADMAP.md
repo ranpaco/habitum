@@ -2,7 +2,7 @@
 
 Este roadmap separa lo que existe hoy, lo que falta para un demo funcional y lo que falta para convertir el sitio en producto SaaS real.
 
-Actualizado: 2026-08-19.
+Actualizado: 2026-09-28.
 
 ## Estado Actual
 
@@ -170,10 +170,15 @@ Estado actual:
 - Dashboard incluye agente IA conectado a documentos/reglas de la comunidad.
 - Quick actions existen visualmente, pero todavia no ejecutan flujos reales.
 - No existe aun una vista completa de unidades, propietarios, documentos, pagos, reportes ni actividad.
+- Primera entrega operativa completada:
+  - barra de contexto con comunidad, modo de datos, ultima actualizacion, refresco e importacion;
+  - tabla responsive de unidades y propietarios conectada a datos del onboarding;
+  - busqueda por unidad/propietario, filtro por estado y ordenamiento;
+  - detalle basico de unidad con propietario, saldo, ultima actividad, contacto y notas cuando existan.
 
 Fase 1 - Utilidad inmediata del dashboard:
 
-- Reemplazar el hero de bienvenida por una barra de contexto operativa:
+- Reemplazar el hero de bienvenida por una barra de contexto operativa: **Completado.**
   - comunidad activa;
   - modo `sample` vs `live`;
   - fecha de ultima actualizacion;
@@ -185,18 +190,18 @@ Fase 1 - Utilidad inmediata del dashboard:
   - unidades morosas;
   - tasa de cobranza;
   - documentos indexados para el agente.
-- Crear tabla de unidades/propietarios:
+- Crear tabla de unidades/propietarios: **Primera version completada.**
   - unidad;
   - propietario/residente;
   - saldo;
   - estado: al dia, pendiente, moroso;
   - ultima actividad;
   - accion para abrir detalle.
-- Agregar busqueda y filtros:
+- Agregar busqueda y filtros: **Completado.**
   - buscar por unidad o nombre;
   - filtrar por estado de saldo;
   - ordenar por saldo, unidad o propietario.
-- Crear panel de detalle de unidad:
+- Crear panel de detalle de unidad: **Parcial: resumen operativo completado; historial y acciones pendientes.**
   - informacion del propietario/residente;
   - balance actual;
   - historial de pagos/importaciones;
@@ -228,13 +233,13 @@ Fase 2 - Acciones reales:
 Fase 3 - Backend/API requerido:
 
 - Extender `GET /api/communities/{communityId}/dashboard` para devolver:
-  - `units`;
+  - `units`; **Completado con datos normalizados del onboarding.**
   - `owners`;
   - `balances`;
   - `payments`;
   - `documents`;
   - `activity`;
-  - `lastUpdatedAt`.
+  - `lastUpdatedAt`; **Completado.**
 - Crear endpoints:
   - `GET /api/communities/{communityId}/units`;
   - `POST /api/communities/{communityId}/units`;
@@ -269,9 +274,9 @@ Fase 4 - UX y calidad:
 
 Primer slice recomendado:
 
-- Implementar frontend de tabla de unidades + filtros usando datos ya disponibles o mock extendido.
-- Luego extender el endpoint de dashboard para devolver unidades/propietarios normalizados.
-- Despues conectar `Record Payment`, porque es la accion que mas rapidamente demuestra valor operativo.
+- Implementar frontend de tabla de unidades + filtros usando datos ya disponibles o mock extendido. **Completado.**
+- Luego extender el endpoint de dashboard para devolver unidades/propietarios normalizados. **Completado para unidades con propietario embebido.**
+- Siguiente: conectar `Record Payment`, porque es la accion que mas rapidamente demuestra valor operativo.
 
 ## Prioridad 3: Agente IA Y Base De Conocimiento
 
