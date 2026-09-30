@@ -199,6 +199,28 @@ Expected:
 - Desktop renders a stable table and mobile renders a readable stacked list without horizontal page overflow.
 - Live communities created before this API change remain usable through the compatibility fallback.
 
+## Flow 10: Record Manual Payment
+
+Route: `#dashboard?communityId=<id>`
+
+Expected:
+
+- `Record Payment` is disabled in sample mode and enabled in live mode.
+- Opening the action shows only units with an outstanding balance.
+- Selecting a unit displays its owner and current balance and prefills the full outstanding amount.
+- Form captures amount, community currency, method, payment date, and optional reference.
+- Amount must be greater than zero and cannot exceed the selected unit balance.
+- Reference accepts at most 100 characters.
+- Submit is disabled while the payment is being recorded.
+- API errors keep the form open and show a recoverable message.
+- Successful submission closes the form and shows a confirmation banner.
+- Unit balance and status update without a page reload.
+- Outstanding balance and collection rate recalculate without a page reload.
+- The payment appears first in `Recent Payments` with date, method, and completed status.
+- A `payment_recorded` entry appears in `Recent activity` and updates the unit's last activity.
+- Refreshing the live dashboard preserves the payment, updated metrics, and activity.
+- Fully paid units disappear from the payment form's unit options.
+
 ## Cloud QA Runbook
 
 Environment:
@@ -241,6 +263,9 @@ Manual coverage before a customer-facing demo:
   - Verify no sample banner, metrics, recent payments, agent ready state, citations, and out-of-scope response.
   - Verify unit search, each balance filter, all sort options, empty state, clear filters, and unit detail.
   - In live mode, verify refresh updates the timestamp/data without switching to sample mode.
+  - Record a partial payment with fake QA data and verify balance, metrics, recent payments, and activity.
+  - Record the remaining balance and verify the unit becomes current and is removed from payable options.
+  - Verify zero, negative, and over-balance amounts cannot be submitted.
 - Responsive:
   - Capture desktop screenshot.
   - Capture mobile screenshot.

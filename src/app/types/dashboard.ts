@@ -12,6 +12,36 @@ export interface DashboardUnit {
   notes?: string;
 }
 
+export interface DashboardPayment {
+  id?: string;
+  unit: string;
+  owner: string;
+  amount: number;
+  currency: string;
+  status: string;
+  method?: string;
+  paidAt?: string;
+  reference?: string;
+  createdAt?: string;
+}
+
+export interface DashboardActivity {
+  id: string;
+  type: string;
+  unit?: string;
+  description: string;
+  occurredAt: string;
+}
+
+export interface RecordPaymentInput {
+  unit: string;
+  amount: number;
+  currency: string;
+  method: "cash" | "bank_transfer" | "card" | "check" | "zelle" | "other";
+  paidAt: string;
+  reference?: string;
+}
+
 export interface DashboardData {
   community: {
     id: string;
@@ -26,13 +56,9 @@ export interface DashboardData {
     totalBalances: number;
     collectionRate: number;
   };
-  recentPayments: Array<{
-    unit: string;
-    owner: string;
-    amount: number;
-    currency: string;
-    status: string;
-  }>;
+  recentPayments: DashboardPayment[];
+  payments?: DashboardPayment[];
+  activity?: DashboardActivity[];
   units?: DashboardUnit[];
   lastUpdatedAt?: string;
   agent: {
@@ -40,6 +66,11 @@ export interface DashboardData {
     knowledgeDocuments: number;
     suggestedQuestions: string[];
   };
+}
+
+export interface RecordPaymentResponse {
+  payment: DashboardPayment;
+  dashboard: DashboardData;
 }
 
 export interface AgentAskResponse {

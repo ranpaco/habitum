@@ -2,7 +2,7 @@
 
 Este roadmap separa lo que existe hoy, lo que falta para un demo funcional y lo que falta para convertir el sitio en producto SaaS real.
 
-Actualizado: 2026-09-28.
+Actualizado: 2026-09-30.
 
 ## Estado Actual
 
@@ -175,6 +175,11 @@ Estado actual:
   - tabla responsive de unidades y propietarios conectada a datos del onboarding;
   - busqueda por unidad/propietario, filtro por estado y ordenamiento;
   - detalle basico de unidad con propietario, saldo, ultima actividad, contacto y notas cuando existan.
+- Registro manual de pagos completado:
+  - formulario con unidad, monto, moneda, metodo, fecha y referencia;
+  - validacion de saldo y bloqueo de sobrepagos;
+  - actualizacion inmediata de saldo, estado de unidad, total pendiente y tasa de cobranza;
+  - historial de pagos y actividad administrativa persistidos en la comunidad.
 
 Fase 1 - Utilidad inmediata del dashboard:
 
@@ -214,7 +219,7 @@ Fase 2 - Acciones reales:
   - crear propietario/unidad desde el dashboard;
   - validar campos requeridos;
   - actualizar metricas sin recargar la pagina.
-- Hacer funcional `Record Payment`:
+- Hacer funcional `Record Payment`: **Completado.**
   - registrar pago manual;
   - soportar monto, moneda, metodo, fecha y referencia;
   - recalcular saldos y tasa de cobranza;
@@ -236,22 +241,22 @@ Fase 3 - Backend/API requerido:
   - `units`; **Completado con datos normalizados del onboarding.**
   - `owners`;
   - `balances`;
-  - `payments`;
+  - `payments`; **Completado para pagos manuales.**
   - `documents`;
-  - `activity`;
+  - `activity`; **Iniciado con eventos de pagos manuales.**
   - `lastUpdatedAt`; **Completado.**
 - Crear endpoints:
   - `GET /api/communities/{communityId}/units`;
   - `POST /api/communities/{communityId}/units`;
   - `PATCH /api/communities/{communityId}/units/{unitId}`;
-  - `POST /api/communities/{communityId}/payments`;
+  - `POST /api/communities/{communityId}/payments`; **Completado.**
   - `GET /api/communities/{communityId}/documents`;
   - `PATCH /api/communities/{communityId}/agent/rules`;
   - `GET /api/communities/{communityId}/reports/collections`.
 - Persistir auditoria minima:
   - imports confirmados;
   - unidades creadas/editadas;
-  - pagos registrados;
+  - pagos registrados; **Completado para pagos manuales.**
   - reglas/documentos actualizados;
   - preguntas al agente marcadas para revision humana.
 
@@ -276,7 +281,8 @@ Primer slice recomendado:
 
 - Implementar frontend de tabla de unidades + filtros usando datos ya disponibles o mock extendido. **Completado.**
 - Luego extender el endpoint de dashboard para devolver unidades/propietarios normalizados. **Completado para unidades con propietario embebido.**
-- Siguiente: conectar `Record Payment`, porque es la accion que mas rapidamente demuestra valor operativo.
+- `Record Payment` conectado y validado localmente. **Completado.**
+- Siguiente: hacer funcional `Add Owner` para crear unidades/propietarios y actualizar metricas sin recargar.
 
 ## Prioridad 3: Agente IA Y Base De Conocimiento
 

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { AlertCircle, Bot, Building2, CheckCircle, DollarSign, FileText, RefreshCw, Send, Upload, Users } from "lucide-react";
+import { Activity, AlertCircle, Bot, Building2, CheckCircle, DollarSign, FileText, RefreshCw, Send, Upload, Users } from "lucide-react";
+import { RecordPaymentDialog } from "./dashboard/RecordPaymentDialog";
 import { UnitDirectory } from "./dashboard/UnitDirectory";
 import { fallbackDashboard } from "../mocks/dashboard";
-import { askCommunityAgent, getCommunityDashboard } from "../services/dashboard";
-import { AgentAskResponse, DashboardData, DashboardUnit } from "../types/dashboard";
+import { askCommunityAgent, getCommunityDashboard, recordCommunityPayment } from "../services/dashboard";
+import { AgentAskResponse, DashboardData, DashboardUnit, RecordPaymentInput } from "../types/dashboard";
 
 const COMMUNITY_STORAGE_KEY = "habitum.communityId";
 
@@ -18,6 +19,8 @@ export function Dashboard() {
   const [agentAnswer, setAgentAnswer] = useState<AgentAskResponse | null>(null);
   const [isAskingAgent, setIsAskingAgent] = useState(false);
   const [agentError, setAgentError] = useState<string | null>(null);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
 
   const loadLiveDashboard = useCallback((communityId: string) => {
     setIsLoading(true);
@@ -51,6 +54,13 @@ export function Dashboard() {
   const isSampleData = dataMode === "sample";
   const activeCommunityId = isSampleData ? null : community.id;
   const units = getDashboardUnits(dashboardData);
+
+  const recordPayment = async (payment: RecordPaymentInput) => {
+    if (!activeCommunityId) throw new Error("Live community required");
+    const result = await recordCommunityPayment(activeCommunityId, payment);
+    setDashboardData(result.dashboard);
+    setPaymentSuccess(`${formatMoney(result.payment.amount, result.payment.currency)} payment recorded for ${result.payment.unit}.`);
+  };
 
   const askAgent = async (question: string) => {
     const trimmedQuestion = question.trim();
@@ -125,6 +135,13 @@ export function Dashboard() {
                 {isLoading ? "Retrying..." : "Retry Live Data"}
               </button>
             )}
+          </div>
+        )}
+
+        {paymentSuccess && (
+          <div className="mb-6 flex items-start justify-between gap-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status">
+            <span className="flex items-center gap-2"><CheckCircle className="h-4 w-4 shrink-0" />{paymentSuccess}</span>
+            <button type="button" onClick={() => setPaymentSuccess(null)} className="font-semibold hover:text-emerald-950">Dismiss</button>
           </div>
         )}
 
@@ -218,38 +235,60 @@ export function Dashboard() {
 
         {/* Main Grid */}
         <div className="grid lg:grid-cols-2 gap-8">
-          {/* Recent Payments */}
-          <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
-            <h2 className="text-2xl font-bold text-[#1A365D] mb-6">Recent Payments</h2>
-            <div className="space-y-4">
-              {recentPayments.length === 0 && (
-                <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-600">
-                  Payment data will appear here after the upload and reconciliation step is connected.
-                </div>
-              )}
+          <div className="space-y-8">
+            {/* Recent Payments */}
+            <section className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
+              <h2 className="text-2xl font-bold text-[#1A365D] mb-6">Recent Payments</h2>
+              <div className="space-y-4">
+                {recentPayments.length === 0 && (
+                  <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-6 text-center text-sm text-gray-600">
+                    Recorded payments will appear here.
+                  </div>
+                )}
 
-              {recentPayments.map((payment, index) => (
-                <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#00A3BF] to-[#1A365D] rounded-lg flex items-center justify-center text-white font-bold">
-                      {payment.unit[0]}
+                {recentPayments.slice(0, 5).map((payment, index) => (
+                  <div key={payment.id || `${payment.unit}-${index}`} className="flex items-center justify-between gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
+                    <div className="flex min-w-0 items-center gap-4">
+                      <div className="w-10 h-10 shrink-0 bg-gradient-to-br from-[#00A3BF] to-[#1A365D] rounded-lg flex items-center justify-center text-white font-bold">
+                        {payment.unit[0]}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-semibold text-[#1A365D]">{payment.unit}</p>
+                        <p className="truncate text-sm text-gray-600">{payment.owner}</p>
+                        {payment.paidAt && <p className="mt-0.5 text-xs text-gray-500">{formatDate(payment.paidAt)} · {formatStatus(payment.method || "manual")}</p>}
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-[#1A365D]">{payment.unit}</p>
-                      <p className="text-sm text-gray-600">{payment.owner}</p>
+                    <div className="shrink-0 text-right">
+                      <p className="font-bold text-[#1A365D]">{formatMoney(payment.amount, payment.currency)}</p>
+                      <span className={`inline-block text-xs px-2 py-1 rounded-full ${
+                        payment.status === "completed" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                      }`}>
+                        {formatStatus(payment.status)}
+                      </span>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-[#1A365D]">{formatMoney(payment.amount, payment.currency)}</p>
-                    <span className={`inline-block text-xs px-2 py-1 rounded-full ${
-                      payment.status === "completed" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
-                    }`}>
-                      {formatStatus(payment.status)}
-                    </span>
-                  </div>
+                ))}
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-gray-100 bg-white p-8 shadow-lg">
+              <div className="mb-5 flex items-center gap-3">
+                <Activity className="h-5 w-5 text-[#00A3BF]" />
+                <h2 className="text-xl font-bold text-[#1A365D]">Recent activity</h2>
+              </div>
+              {dashboardData.activity?.length ? (
+                <div className="space-y-4">
+                  {dashboardData.activity.slice(0, 5).map((entry) => (
+                    <div key={entry.id} className="border-l-2 border-[#00A3BF]/30 pl-4">
+                      <p className="text-sm font-semibold text-[#1A365D]">{entry.description}</p>
+                      <p className="mt-1 text-xs text-gray-500">{entry.unit ? `${entry.unit} · ` : ""}{formatDateTime(entry.occurredAt)}</p>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              ) : (
+                <p className="text-sm text-gray-600">Administrative actions will appear here.</p>
+              )}
+            </section>
           </div>
 
           {/* AI Agent */}
@@ -368,7 +407,13 @@ export function Dashboard() {
               <Users className="w-8 h-8 text-[#00A3BF] mb-3" />
               <p className="font-semibold text-[#1A365D]">Add Owner</p>
             </button>
-            <button className="p-6 bg-gradient-to-br from-[#00A3BF]/10 to-[#1A365D]/10 rounded-xl hover:shadow-lg transition-all border-2 border-transparent hover:border-[#00A3BF]">
+            <button
+              type="button"
+              onClick={() => { setPaymentSuccess(null); setIsPaymentDialogOpen(true); }}
+              disabled={!activeCommunityId}
+              title={activeCommunityId ? "Record a manual payment" : "Open a live community to record payments"}
+              className="p-6 bg-gradient-to-br from-[#00A3BF]/10 to-[#1A365D]/10 rounded-xl hover:shadow-lg transition-all border-2 border-transparent hover:border-[#00A3BF] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-transparent disabled:hover:shadow-none"
+            >
               <DollarSign className="w-8 h-8 text-[#00A3BF] mb-3" />
               <p className="font-semibold text-[#1A365D]">Record Payment</p>
             </button>
@@ -383,6 +428,13 @@ export function Dashboard() {
             </div>
           </div>
       </div>
+      <RecordPaymentDialog
+        open={isPaymentDialogOpen}
+        onOpenChange={setIsPaymentDialogOpen}
+        units={units}
+        currency={community.baseCurrency}
+        onSubmit={recordPayment}
+      />
     </div>
   );
 }
@@ -426,4 +478,10 @@ function formatDateTime(value?: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "not available";
   return new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short" }).format(date);
+}
+
+function formatDate(value: string) {
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(date);
 }

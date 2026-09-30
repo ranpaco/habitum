@@ -100,6 +100,11 @@ export async function handler(event) {
       return getDashboard(dashboardMatch[1]);
     }
 
+    const paymentsMatch = path.match(/^\/api\/communities\/([^/]+)\/payments$/);
+    if (method === "POST" && paymentsMatch) {
+      return recordPayment(paymentsMatch[1], parseBody(event));
+    }
+
     const agentAskMatch = path.match(/^\/api\/communities\/([^/]+)\/agent\/ask$/);
     if (method === "POST" && agentAskMatch) {
       return askCommunityAgent(agentAskMatch[1], parseBody(event));
@@ -699,25 +704,153 @@ async function getDashboard(communityId) {
     return response(404, { error: "community_not_found" });
   }
 
-  const baseCurrency = result.Item.baseCurrency?.S || "USD";
-  const lastUpdatedAt = result.Item.updatedAt?.S;
-  const extractedRows = parseJsonAttribute(result.Item.extractedRowsJson?.S, []);
+  return response(200, buildDashboardPayload(communityId, result.Item));
+}
 
-  return response(200, {
+async function recordPayment(communityId, body) {
+  const result = await ddb.send(new GetItemCommand({
+    TableName: env.communitiesTable,
+    Key: { id: { S: communityId } },
+  }));
+
+  if (!result.Item) {
+    return response(404, { error: "community_not_found" });
+  }
+
+  const unitName = String(body.unit || "").trim();
+  const amount = Number(body.amount);
+  const currency = String(body.currency || "").trim().toUpperCase();
+  const method = String(body.method || "").trim();
+  const paidAt = String(body.paidAt || "").trim();
+  const reference = String(body.reference || "").trim();
+  const allowedMethods = new Set(["cash", "bank_transfer", "card", "check", "zelle", "other"]);
+  const baseCurrency = String(result.Item.baseCurrency?.S || "USD").toUpperCase();
+
+  if (!unitName) return response(400, { error: "payment_unit_required" });
+  if (!Number.isFinite(amount) || amount <= 0) return response(400, { error: "invalid_payment_amount" });
+  if (currency !== baseCurrency) return response(400, { error: "payment_currency_mismatch", currency: baseCurrency });
+  if (!allowedMethods.has(method)) return response(400, { error: "invalid_payment_method" });
+  if (!isValidDateInput(paidAt)) return response(400, { error: "invalid_payment_date" });
+  if (reference.length > 100) return response(400, { error: "payment_reference_too_long", maxLength: 100 });
+
+  const extractedRows = parseJsonAttribute(result.Item.extractedRowsJson?.S, []);
+  const unitIndex = extractedRows.findIndex((row) => String(row.unit || "").trim() === unitName);
+
+  if (unitIndex < 0) return response(404, { error: "unit_not_found" });
+
+  const currentBalance = roundMoney(Number(extractedRows[unitIndex].balance || 0));
+  const paymentAmount = roundMoney(amount);
+
+  if (currentBalance <= 0) return response(409, { error: "unit_balance_already_paid" });
+  if (paymentAmount > currentBalance) {
+    return response(400, { error: "payment_exceeds_balance", currentBalance });
+  }
+
+  const now = new Date().toISOString();
+  const updatedBalance = roundMoney(currentBalance - paymentAmount);
+  const updatedRows = extractedRows.map((row, index) => index === unitIndex
+    ? { ...row, balance: updatedBalance, status: updatedBalance <= 0 ? "paid" : row.status === "overdue" ? "overdue" : "pending" }
+    : row);
+  const totalBalances = roundMoney(updatedRows.reduce((sum, row) => sum + Number(row.balance || 0), 0));
+  const paidUnits = updatedRows.filter((row) => Number(row.balance || 0) <= 0).length;
+  const collectionRate = updatedRows.length > 0 ? Math.round((paidUnits / updatedRows.length) * 100) : 0;
+  const payment = {
+    id: `pay_${crypto.randomUUID()}`,
+    unit: unitName,
+    owner: String(updatedRows[unitIndex].owner || "Unknown owner"),
+    amount: paymentAmount,
+    currency: baseCurrency,
+    method,
+    paidAt,
+    reference,
+    status: "completed",
+    createdAt: now,
+  };
+  const existingPayments = parseJsonAttribute(result.Item.paymentsJson?.S, []);
+  const payments = [payment, ...existingPayments].slice(0, 100);
+  const recentPayments = payments.slice(0, 10);
+  const existingActivity = parseJsonAttribute(result.Item.activityJson?.S, []);
+  const activity = [{
+    id: `act_${crypto.randomUUID()}`,
+    type: "payment_recorded",
+    unit: unitName,
+    description: `Payment of ${paymentAmount} ${baseCurrency} recorded`,
+    occurredAt: now,
+  }, ...existingActivity].slice(0, 50);
+
+  const previousUpdatedAt = result.Item.updatedAt?.S;
+  const expressionAttributeValues = {
+    ":extractedRowsJson": { S: JSON.stringify(updatedRows) },
+    ":previewRowsJson": { S: JSON.stringify(updatedRows.slice(0, 5)) },
+    ":totalBalances": { N: String(totalBalances) },
+    ":collectionRate": { N: String(collectionRate) },
+    ":recentPaymentsJson": { S: JSON.stringify(recentPayments) },
+    ":paymentsJson": { S: JSON.stringify(payments) },
+    ":activityJson": { S: JSON.stringify(activity) },
+    ":updatedAt": { S: now },
+  };
+
+  if (previousUpdatedAt) {
+    expressionAttributeValues[":previousUpdatedAt"] = { S: previousUpdatedAt };
+  }
+
+  let updateResult;
+  try {
+    updateResult = await ddb.send(new UpdateItemCommand({
+      TableName: env.communitiesTable,
+      Key: { id: { S: communityId } },
+      UpdateExpression: [
+        "SET extractedRowsJson = :extractedRowsJson",
+        "previewRowsJson = :previewRowsJson",
+        "totalBalances = :totalBalances",
+        "collectionRate = :collectionRate",
+        "recentPaymentsJson = :recentPaymentsJson",
+        "paymentsJson = :paymentsJson",
+        "activityJson = :activityJson",
+        "updatedAt = :updatedAt",
+      ].join(", "),
+      ConditionExpression: previousUpdatedAt
+        ? "updatedAt = :previousUpdatedAt"
+        : "attribute_not_exists(updatedAt)",
+      ExpressionAttributeValues: expressionAttributeValues,
+      ReturnValues: "ALL_NEW",
+    }));
+  } catch (error) {
+    if (error?.name === "ConditionalCheckFailedException") {
+      return response(409, { error: "payment_conflict" });
+    }
+    throw error;
+  }
+
+  return response(201, {
+    payment,
+    dashboard: buildDashboardPayload(communityId, updateResult.Attributes),
+  });
+}
+
+function buildDashboardPayload(communityId, item) {
+  const baseCurrency = String(item.baseCurrency?.S || "USD").toUpperCase();
+  const lastUpdatedAt = item.updatedAt?.S;
+  const extractedRows = parseJsonAttribute(item.extractedRowsJson?.S, []);
+  const activity = parseJsonAttribute(item.activityJson?.S, []);
+
+  return {
     community: {
       id: communityId,
-      name: result.Item.name?.S,
-      country: result.Item.country?.S,
+      name: item.name?.S,
+      country: item.country?.S,
       baseCurrency,
-      region: result.Item.region?.S,
+      region: item.region?.S,
     },
     metrics: {
-      totalUnits: Number(result.Item.totalUnits?.N || 0),
-      activeOwners: Number(result.Item.activeOwners?.N || 0),
-      totalBalances: Number(result.Item.totalBalances?.N || 0),
-      collectionRate: Number(result.Item.collectionRate?.N || 0),
+      totalUnits: Number(item.totalUnits?.N || 0),
+      activeOwners: Number(item.activeOwners?.N || 0),
+      totalBalances: Number(item.totalBalances?.N || 0),
+      collectionRate: Number(item.collectionRate?.N || 0),
     },
-    recentPayments: parseJsonAttribute(result.Item.recentPaymentsJson?.S, []),
+    recentPayments: parseJsonAttribute(item.recentPaymentsJson?.S, []),
+    payments: parseJsonAttribute(item.paymentsJson?.S, []),
+    activity,
     units: extractedRows.map((row, index) => ({
       id: `${communityId}:${index}`,
       unit: row.unit || "Unassigned",
@@ -725,12 +858,12 @@ async function getDashboard(communityId) {
       balance: Number(row.balance || 0),
       currency: baseCurrency,
       status: row.status === "paid" || Number(row.balance || 0) <= 0 ? "current" : row.status || "pending",
-      lastActivityAt: lastUpdatedAt,
+      lastActivityAt: activity.find((entry) => entry.unit === row.unit)?.occurredAt || lastUpdatedAt,
     })),
     lastUpdatedAt,
     agent: {
-      status: parseJsonAttribute(result.Item.knowledgeChunksJson?.S, []).length > 0 ? "ready" : "not_configured",
-      knowledgeDocuments: parseJsonAttribute(result.Item.knowledgeDocumentsJson?.S, []).length,
+      status: parseJsonAttribute(item.knowledgeChunksJson?.S, []).length > 0 ? "ready" : "not_configured",
+      knowledgeDocuments: parseJsonAttribute(item.knowledgeDocumentsJson?.S, []).length,
       suggestedQuestions: [
         "Puedo tener mascotas?",
         "Como puedo reservar el salon?",
@@ -738,7 +871,7 @@ async function getDashboard(communityId) {
         "Cuales son las normas de ruido?",
       ],
     },
-  });
+  };
 }
 
 async function askCommunityAgent(communityId, body) {
@@ -1569,6 +1702,16 @@ function parseMoney(value) {
     .replace(/,/g, "");
   const amount = Number(cleaned);
   return Number.isFinite(amount) ? amount : 0;
+}
+
+function roundMoney(value) {
+  return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+}
+
+function isValidDateInput(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
 function toArray(value) {
