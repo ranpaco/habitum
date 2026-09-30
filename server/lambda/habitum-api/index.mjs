@@ -748,9 +748,17 @@ async function recordPayment(communityId, body) {
 
   const now = new Date().toISOString();
   const updatedBalance = roundMoney(currentBalance - paymentAmount);
-  const updatedRows = extractedRows.map((row, index) => index === unitIndex
-    ? { ...row, balance: updatedBalance, status: updatedBalance <= 0 ? "paid" : row.status === "overdue" ? "overdue" : "pending" }
-    : row);
+  const previousUpdatedAt = result.Item.updatedAt?.S;
+  const updatedRows = extractedRows.map((row, index) => ({
+    ...row,
+    lastActivityAt: index === unitIndex ? now : row.lastActivityAt || previousUpdatedAt,
+    ...(index === unitIndex
+      ? {
+          balance: updatedBalance,
+          status: updatedBalance <= 0 ? "paid" : row.status === "overdue" ? "overdue" : "pending",
+        }
+      : {}),
+  }));
   const totalBalances = roundMoney(updatedRows.reduce((sum, row) => sum + Number(row.balance || 0), 0));
   const paidUnits = updatedRows.filter((row) => Number(row.balance || 0) <= 0).length;
   const collectionRate = updatedRows.length > 0 ? Math.round((paidUnits / updatedRows.length) * 100) : 0;
@@ -778,7 +786,6 @@ async function recordPayment(communityId, body) {
     occurredAt: now,
   }, ...existingActivity].slice(0, 50);
 
-  const previousUpdatedAt = result.Item.updatedAt?.S;
   const expressionAttributeValues = {
     ":extractedRowsJson": { S: JSON.stringify(updatedRows) },
     ":previewRowsJson": { S: JSON.stringify(updatedRows.slice(0, 5)) },
@@ -858,7 +865,7 @@ function buildDashboardPayload(communityId, item) {
       balance: Number(row.balance || 0),
       currency: baseCurrency,
       status: row.status === "paid" || Number(row.balance || 0) <= 0 ? "current" : row.status || "pending",
-      lastActivityAt: activity.find((entry) => entry.unit === row.unit)?.occurredAt || lastUpdatedAt,
+      lastActivityAt: activity.find((entry) => entry.unit === row.unit)?.occurredAt || row.lastActivityAt || lastUpdatedAt,
     })),
     lastUpdatedAt,
     agent: {
