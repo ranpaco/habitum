@@ -301,7 +301,7 @@ Manual coverage before a customer-facing demo:
 
 ## Current QA Run
 
-Date: 2026-08-12, 2026-08-16, 2026-08-17, and 2026-08-18.
+Date: 2026-08-12, 2026-08-16, 2026-08-17, 2026-08-18, and 2026-10-08.
 
 Environment:
 
@@ -455,6 +455,28 @@ Formal cloud QA pass - 2026-08-18 local / 2026-08-19 UTC:
   - The browser captured screenshots successfully.
   - Submit-heavy flows could not be completed through the browser wrapper because click translation and DOM submit/click helpers failed in this session.
   - Product behavior for those paths was validated through the real backend API and then visually opened in live cloud dashboard URLs.
+
+Add Owner cloud QA pass - 2026-10-08:
+
+- Commit: `c08bb61d117e56554484d1ee30918b30feb02234`.
+- GitHub Actions `Deploy Dev`: pass.
+  - Run: `https://github.com/ranpaco/habitum/actions/runs/37790463661`.
+- Community: `com_ded6c2e2-74ae-484b-8962-82354c9a8118`.
+- Zero-balance owner creation: pass.
+  - Unit `QA-408-ZERO` persisted as current with contact, notes, and `owner_added` activity.
+- Positive-balance owner creation: pass.
+  - Unit `QA-508-DUE` persisted as pending with a `$75` balance, contact, notes, and activity.
+- Metrics recalculation: pass.
+  - Before: 3 units, 3 active owners, `$398` outstanding, 33% collection rate.
+  - After: 5 units, 5 active owners, `$473` outstanding, 40% collection rate.
+- Duplicate unit rejection: pass.
+  - Case-insensitive duplicate returned HTTP `409` with `unit_already_exists`.
+- Browser validation: pass.
+  - Desktop and 390x844 mobile modal layouts rendered without overlap.
+  - Required, duplicate-unit, and negative-balance validations prevented submission.
+  - Published CloudFront dashboard showed both units, recalculated metrics, activity, contact, and notes.
+- Console warning found and fixed:
+  - `DialogOverlay` now forwards the Radix ref instead of triggering the React `SlotClone` warning.
 
 Issues found and fixed:
 
