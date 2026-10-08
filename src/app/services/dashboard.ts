@@ -1,5 +1,12 @@
 import { apiRequest } from "./apiClient";
-import { AgentAskResponse, DashboardData, RecordPaymentInput, RecordPaymentResponse } from "../types/dashboard";
+import {
+  AgentAskResponse,
+  CreateOwnerInput,
+  CreateOwnerResponse,
+  DashboardData,
+  RecordPaymentInput,
+  RecordPaymentResponse,
+} from "../types/dashboard";
 
 export function getCommunityDashboard(communityId: string) {
   return apiRequest<DashboardData>(`/api/communities/${communityId}/dashboard`);
@@ -16,5 +23,12 @@ export function recordCommunityPayment(communityId: string, payment: RecordPayme
   return apiRequest<RecordPaymentResponse>(`/api/communities/${communityId}/payments`, {
     method: "POST",
     body: JSON.stringify(payment),
+  });
+}
+
+export function createCommunityOwner(communityId: string, owner: CreateOwnerInput) {
+  return apiRequest<CreateOwnerResponse>(`/api/communities/${communityId}/units`, {
+    method: "POST",
+    body: JSON.stringify(owner),
   });
 }

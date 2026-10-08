@@ -221,6 +221,27 @@ Expected:
 - Refreshing the live dashboard preserves the payment, updated metrics, and activity.
 - Fully paid units disappear from the payment form's unit options.
 
+## Flow 11: Add Owner And Unit
+
+Route: `#dashboard?communityId=<id>`
+
+Expected:
+
+- `Add Owner` is disabled in sample mode and enabled in live mode.
+- Form captures unit, owner/resident, optional contact, initial balance, and optional administrative notes.
+- Unit and owner/resident are required.
+- Initial balance must be zero or greater and uses the community currency.
+- Duplicate unit identifiers are rejected without changing dashboard data.
+- Submit is disabled while the owner is being added.
+- API errors keep the form open and show a recoverable message.
+- Successful submission closes the form and shows a confirmation banner.
+- The new unit appears in the directory without a page reload.
+- Total units, active owners, outstanding balance, and collection rate recalculate without a page reload.
+- Zero-balance units appear as current; positive-balance units appear as pending.
+- Contact and administrative notes appear in unit detail when supplied.
+- An `owner_added` entry appears in `Recent activity` for the new unit.
+- Refreshing the live dashboard preserves the owner, unit, metrics, contact, notes, and activity.
+
 ## Cloud QA Runbook
 
 Environment:
@@ -266,6 +287,9 @@ Manual coverage before a customer-facing demo:
   - Record a partial payment with fake QA data and verify balance, metrics, recent payments, and activity.
   - Record the remaining balance and verify the unit becomes current and is removed from payable options.
   - Verify zero, negative, and over-balance amounts cannot be submitted.
+  - Add an owner with a zero-balance unit and verify current status, metrics, detail, and activity.
+  - Add an owner with a positive initial balance and verify pending status and outstanding balance.
+  - Verify a duplicate unit and a negative balance cannot be submitted.
 - Responsive:
   - Capture desktop screenshot.
   - Capture mobile screenshot.

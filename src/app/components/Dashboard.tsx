@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Activity, AlertCircle, Bot, Building2, CheckCircle, DollarSign, FileText, RefreshCw, Send, Upload, Users } from "lucide-react";
+import { AddOwnerDialog } from "./dashboard/AddOwnerDialog";
 import { RecordPaymentDialog } from "./dashboard/RecordPaymentDialog";
 import { UnitDirectory } from "./dashboard/UnitDirectory";
 import { fallbackDashboard } from "../mocks/dashboard";
-import { askCommunityAgent, getCommunityDashboard, recordCommunityPayment } from "../services/dashboard";
-import { AgentAskResponse, DashboardData, DashboardUnit, RecordPaymentInput } from "../types/dashboard";
+import { askCommunityAgent, createCommunityOwner, getCommunityDashboard, recordCommunityPayment } from "../services/dashboard";
+import { AgentAskResponse, CreateOwnerInput, DashboardData, DashboardUnit, RecordPaymentInput } from "../types/dashboard";
 
 const COMMUNITY_STORAGE_KEY = "habitum.communityId";
 
@@ -19,8 +20,9 @@ export function Dashboard() {
   const [agentAnswer, setAgentAnswer] = useState<AgentAskResponse | null>(null);
   const [isAskingAgent, setIsAskingAgent] = useState(false);
   const [agentError, setAgentError] = useState<string | null>(null);
+  const [isOwnerDialogOpen, setIsOwnerDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState<string | null>(null);
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   const loadLiveDashboard = useCallback((communityId: string) => {
     setIsLoading(true);
@@ -59,7 +61,14 @@ export function Dashboard() {
     if (!activeCommunityId) throw new Error("Live community required");
     const result = await recordCommunityPayment(activeCommunityId, payment);
     setDashboardData(result.dashboard);
-    setPaymentSuccess(`${formatMoney(result.payment.amount, result.payment.currency)} payment recorded for ${result.payment.unit}.`);
+    setActionSuccess(`${formatMoney(result.payment.amount, result.payment.currency)} payment recorded for ${result.payment.unit}.`);
+  };
+
+  const addOwner = async (owner: CreateOwnerInput) => {
+    if (!activeCommunityId) throw new Error("Live community required");
+    const result = await createCommunityOwner(activeCommunityId, owner);
+    setDashboardData(result.dashboard);
+    setActionSuccess(`${result.unit.owner} was added to unit ${result.unit.unit}.`);
   };
 
   const askAgent = async (question: string) => {
@@ -138,10 +147,10 @@ export function Dashboard() {
           </div>
         )}
 
-        {paymentSuccess && (
+        {actionSuccess && (
           <div className="mb-6 flex items-start justify-between gap-4 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800" role="status">
-            <span className="flex items-center gap-2"><CheckCircle className="h-4 w-4 shrink-0" />{paymentSuccess}</span>
-            <button type="button" onClick={() => setPaymentSuccess(null)} className="font-semibold hover:text-emerald-950">Dismiss</button>
+            <span className="flex items-center gap-2"><CheckCircle className="h-4 w-4 shrink-0" />{actionSuccess}</span>
+            <button type="button" onClick={() => setActionSuccess(null)} className="font-semibold hover:text-emerald-950">Dismiss</button>
           </div>
         )}
 
@@ -403,13 +412,19 @@ export function Dashboard() {
         <div className="mt-8 bg-white rounded-2xl p-8 shadow-lg border border-gray-100">
           <h2 className="text-2xl font-bold text-[#1A365D] mb-6">Quick Actions</h2>
           <div className="grid md:grid-cols-4 gap-4">
-            <button className="p-6 bg-gradient-to-br from-[#00A3BF]/10 to-[#1A365D]/10 rounded-xl hover:shadow-lg transition-all border-2 border-transparent hover:border-[#00A3BF]">
+            <button
+              type="button"
+              onClick={() => { setActionSuccess(null); setIsOwnerDialogOpen(true); }}
+              disabled={!activeCommunityId}
+              title={activeCommunityId ? "Add an owner and unit" : "Open a live community to add owners"}
+              className="p-6 bg-gradient-to-br from-[#00A3BF]/10 to-[#1A365D]/10 rounded-xl hover:shadow-lg transition-all border-2 border-transparent hover:border-[#00A3BF] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-transparent disabled:hover:shadow-none"
+            >
               <Users className="w-8 h-8 text-[#00A3BF] mb-3" />
               <p className="font-semibold text-[#1A365D]">Add Owner</p>
             </button>
             <button
               type="button"
-              onClick={() => { setPaymentSuccess(null); setIsPaymentDialogOpen(true); }}
+              onClick={() => { setActionSuccess(null); setIsPaymentDialogOpen(true); }}
               disabled={!activeCommunityId}
               title={activeCommunityId ? "Record a manual payment" : "Open a live community to record payments"}
               className="p-6 bg-gradient-to-br from-[#00A3BF]/10 to-[#1A365D]/10 rounded-xl hover:shadow-lg transition-all border-2 border-transparent hover:border-[#00A3BF] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-transparent disabled:hover:shadow-none"
@@ -428,6 +443,13 @@ export function Dashboard() {
             </div>
           </div>
       </div>
+      <AddOwnerDialog
+        open={isOwnerDialogOpen}
+        onOpenChange={setIsOwnerDialogOpen}
+        units={units}
+        currency={community.baseCurrency}
+        onSubmit={addOwner}
+      />
       <RecordPaymentDialog
         open={isPaymentDialogOpen}
         onOpenChange={setIsPaymentDialogOpen}

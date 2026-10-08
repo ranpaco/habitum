@@ -2,7 +2,7 @@
 
 Este roadmap separa lo que existe hoy, lo que falta para un demo funcional y lo que falta para convertir el sitio en producto SaaS real.
 
-Actualizado: 2026-09-30.
+Actualizado: 2026-10-08.
 
 ## Estado Actual
 
@@ -215,7 +215,7 @@ Fase 1 - Utilidad inmediata del dashboard:
 
 Fase 2 - Acciones reales:
 
-- Hacer funcional `Add Owner`:
+- Hacer funcional `Add Owner`: **Completado.**
   - crear propietario/unidad desde el dashboard;
   - validar campos requeridos;
   - actualizar metricas sin recargar la pagina.
@@ -239,7 +239,7 @@ Fase 3 - Backend/API requerido:
 
 - Extender `GET /api/communities/{communityId}/dashboard` para devolver:
   - `units`; **Completado con datos normalizados del onboarding.**
-  - `owners`;
+  - `owners`; **Completado con propietario embebido por unidad.**
   - `balances`;
   - `payments`; **Completado para pagos manuales.**
   - `documents`;
@@ -247,7 +247,7 @@ Fase 3 - Backend/API requerido:
   - `lastUpdatedAt`; **Completado.**
 - Crear endpoints:
   - `GET /api/communities/{communityId}/units`;
-  - `POST /api/communities/{communityId}/units`;
+  - `POST /api/communities/{communityId}/units`; **Completado.**
   - `PATCH /api/communities/{communityId}/units/{unitId}`;
   - `POST /api/communities/{communityId}/payments`; **Completado.**
   - `GET /api/communities/{communityId}/documents`;
@@ -255,7 +255,7 @@ Fase 3 - Backend/API requerido:
   - `GET /api/communities/{communityId}/reports/collections`.
 - Persistir auditoria minima:
   - imports confirmados;
-  - unidades creadas/editadas;
+  - unidades creadas/editadas; **Creacion completada; edicion pendiente.**
   - pagos registrados; **Completado para pagos manuales.**
   - reglas/documentos actualizados;
   - preguntas al agente marcadas para revision humana.
@@ -282,7 +282,8 @@ Primer slice recomendado:
 - Implementar frontend de tabla de unidades + filtros usando datos ya disponibles o mock extendido. **Completado.**
 - Luego extender el endpoint de dashboard para devolver unidades/propietarios normalizados. **Completado para unidades con propietario embebido.**
 - `Record Payment` conectado y validado localmente. **Completado.**
-- Siguiente: hacer funcional `Add Owner` para crear unidades/propietarios y actualizar metricas sin recargar.
+- `Add Owner` conectado para crear unidades/propietarios y actualizar metricas sin recargar. **Completado.**
+- Siguiente: hacer funcional `Configure Agent` para administrar fuentes y reglas desde el dashboard.
 
 ## Prioridad 3: Agente IA Y Base De Conocimiento
 

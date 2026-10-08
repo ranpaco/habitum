@@ -100,6 +100,11 @@ export async function handler(event) {
       return getDashboard(dashboardMatch[1]);
     }
 
+    const unitsMatch = path.match(/^\/api\/communities\/([^/]+)\/units$/);
+    if (method === "POST" && unitsMatch) {
+      return createCommunityUnit(unitsMatch[1], parseBody(event));
+    }
+
     const paymentsMatch = path.match(/^\/api\/communities\/([^/]+)\/payments$/);
     if (method === "POST" && paymentsMatch) {
       return recordPayment(paymentsMatch[1], parseBody(event));
@@ -707,6 +712,113 @@ async function getDashboard(communityId) {
   return response(200, buildDashboardPayload(communityId, result.Item));
 }
 
+async function createCommunityUnit(communityId, body) {
+  const result = await ddb.send(new GetItemCommand({
+    TableName: env.communitiesTable,
+    Key: { id: { S: communityId } },
+  }));
+
+  if (!result.Item) {
+    return response(404, { error: "community_not_found" });
+  }
+
+  const unitName = String(body.unit || "").trim();
+  const owner = String(body.owner || "").trim();
+  const contact = String(body.contact || "").trim();
+  const notes = String(body.notes || "").trim();
+  const balance = roundMoney(Number(body.balance || 0));
+  const currency = String(body.currency || "").trim().toUpperCase();
+  const baseCurrency = String(result.Item.baseCurrency?.S || "USD").toUpperCase();
+
+  if (!unitName) return response(400, { error: "unit_name_required" });
+  if (unitName.length > 50) return response(400, { error: "unit_name_too_long", maxLength: 50 });
+  if (!owner) return response(400, { error: "owner_name_required" });
+  if (owner.length > 120) return response(400, { error: "owner_name_too_long", maxLength: 120 });
+  if (contact.length > 160) return response(400, { error: "owner_contact_too_long", maxLength: 160 });
+  if (notes.length > 500) return response(400, { error: "unit_notes_too_long", maxLength: 500 });
+  if (!Number.isFinite(balance) || balance < 0) return response(400, { error: "invalid_initial_balance" });
+  if (currency !== baseCurrency) return response(400, { error: "unit_currency_mismatch", currency: baseCurrency });
+
+  const extractedRows = parseJsonAttribute(result.Item.extractedRowsJson?.S, []);
+  const normalizedUnitName = unitName.toLocaleLowerCase();
+  const duplicateUnit = extractedRows.some((row) => String(row.unit || "").trim().toLocaleLowerCase() === normalizedUnitName);
+
+  if (duplicateUnit) return response(409, { error: "unit_already_exists" });
+
+  const now = new Date().toISOString();
+  const unit = {
+    unit: unitName,
+    owner,
+    balance,
+    status: balance > 0 ? "pending" : "paid",
+    lastActivityAt: now,
+    ...(contact ? { contact } : {}),
+    ...(notes ? { notes } : {}),
+  };
+  const updatedRows = [...extractedRows, unit];
+  const totalUnits = new Set(updatedRows.map((row) => String(row.unit || "").trim().toLocaleLowerCase()).filter(Boolean)).size;
+  const activeOwners = new Set(updatedRows.map((row) => String(row.owner || "").trim().toLocaleLowerCase()).filter(Boolean)).size;
+  const totalBalances = roundMoney(updatedRows.reduce((sum, row) => sum + Number(row.balance || 0), 0));
+  const paidUnits = updatedRows.filter((row) => Number(row.balance || 0) <= 0).length;
+  const collectionRate = updatedRows.length > 0 ? Math.round((paidUnits / updatedRows.length) * 100) : 0;
+  const existingActivity = parseJsonAttribute(result.Item.activityJson?.S, []);
+  const activity = [{
+    id: `act_${crypto.randomUUID()}`,
+    type: "owner_added",
+    unit: unitName,
+    description: `${owner} added to unit ${unitName}`,
+    occurredAt: now,
+  }, ...existingActivity].slice(0, 50);
+  const previousUpdatedAt = result.Item.updatedAt?.S;
+  const expressionAttributeValues = {
+    ":extractedRowsJson": { S: JSON.stringify(updatedRows) },
+    ":previewRowsJson": { S: JSON.stringify(updatedRows.slice(0, 5)) },
+    ":totalUnits": { N: String(totalUnits) },
+    ":activeOwners": { N: String(activeOwners) },
+    ":totalBalances": { N: String(totalBalances) },
+    ":collectionRate": { N: String(collectionRate) },
+    ":activityJson": { S: JSON.stringify(activity) },
+    ":updatedAt": { S: now },
+  };
+
+  if (previousUpdatedAt) {
+    expressionAttributeValues[":previousUpdatedAt"] = { S: previousUpdatedAt };
+  }
+
+  let updateResult;
+  try {
+    updateResult = await ddb.send(new UpdateItemCommand({
+      TableName: env.communitiesTable,
+      Key: { id: { S: communityId } },
+      UpdateExpression: [
+        "SET extractedRowsJson = :extractedRowsJson",
+        "previewRowsJson = :previewRowsJson",
+        "totalUnits = :totalUnits",
+        "activeOwners = :activeOwners",
+        "totalBalances = :totalBalances",
+        "collectionRate = :collectionRate",
+        "activityJson = :activityJson",
+        "updatedAt = :updatedAt",
+      ].join(", "),
+      ConditionExpression: previousUpdatedAt
+        ? "updatedAt = :previousUpdatedAt"
+        : "attribute_not_exists(updatedAt)",
+      ExpressionAttributeValues: expressionAttributeValues,
+      ReturnValues: "ALL_NEW",
+    }));
+  } catch (error) {
+    if (error?.name === "ConditionalCheckFailedException") {
+      return response(409, { error: "unit_create_conflict" });
+    }
+    throw error;
+  }
+
+  return response(201, {
+    unit: buildDashboardUnit(communityId, updatedRows.length - 1, unit, baseCurrency, activity, now),
+    dashboard: buildDashboardPayload(communityId, updateResult.Attributes),
+  });
+}
+
 async function recordPayment(communityId, body) {
   const result = await ddb.send(new GetItemCommand({
     TableName: env.communitiesTable,
@@ -858,15 +970,14 @@ function buildDashboardPayload(communityId, item) {
     recentPayments: parseJsonAttribute(item.recentPaymentsJson?.S, []),
     payments: parseJsonAttribute(item.paymentsJson?.S, []),
     activity,
-    units: extractedRows.map((row, index) => ({
-      id: `${communityId}:${index}`,
-      unit: row.unit || "Unassigned",
-      owner: row.owner || "Unknown owner",
-      balance: Number(row.balance || 0),
-      currency: baseCurrency,
-      status: row.status === "paid" || Number(row.balance || 0) <= 0 ? "current" : row.status || "pending",
-      lastActivityAt: activity.find((entry) => entry.unit === row.unit)?.occurredAt || row.lastActivityAt || lastUpdatedAt,
-    })),
+    units: extractedRows.map((row, index) => buildDashboardUnit(
+      communityId,
+      index,
+      row,
+      baseCurrency,
+      activity,
+      lastUpdatedAt,
+    )),
     lastUpdatedAt,
     agent: {
       status: parseJsonAttribute(item.knowledgeChunksJson?.S, []).length > 0 ? "ready" : "not_configured",
@@ -878,6 +989,20 @@ function buildDashboardPayload(communityId, item) {
         "Cuales son las normas de ruido?",
       ],
     },
+  };
+}
+
+function buildDashboardUnit(communityId, index, row, baseCurrency, activity, lastUpdatedAt) {
+  return {
+    id: `${communityId}:${index}`,
+    unit: row.unit || "Unassigned",
+    owner: row.owner || "Unknown owner",
+    balance: Number(row.balance || 0),
+    currency: baseCurrency,
+    status: row.status === "paid" || Number(row.balance || 0) <= 0 ? "current" : row.status || "pending",
+    lastActivityAt: activity.find((entry) => entry.unit === row.unit)?.occurredAt || row.lastActivityAt || lastUpdatedAt,
+    contact: row.contact || undefined,
+    notes: row.notes || undefined,
   };
 }
 

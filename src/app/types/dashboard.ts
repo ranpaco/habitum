@@ -42,6 +42,15 @@ export interface RecordPaymentInput {
   reference?: string;
 }
 
+export interface CreateOwnerInput {
+  unit: string;
+  owner: string;
+  contact?: string;
+  balance: number;
+  currency: string;
+  notes?: string;
+}
+
 export interface DashboardData {
   community: {
     id: string;
@@ -70,6 +79,11 @@ export interface DashboardData {
 
 export interface RecordPaymentResponse {
   payment: DashboardPayment;
+  dashboard: DashboardData;
+}
+
+export interface CreateOwnerResponse {
+  unit: DashboardUnit;
   dashboard: DashboardData;
 }
 
