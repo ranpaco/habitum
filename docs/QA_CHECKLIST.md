@@ -330,7 +330,7 @@ Manual coverage before a customer-facing demo:
 
 ## Current QA Run
 
-Date: 2026-08-12, 2026-08-16, 2026-08-17, 2026-08-18, and 2026-10-08.
+Date: 2026-08-12, 2026-08-16, 2026-08-17, 2026-08-18, 2026-10-08, and 2026-10-19.
 
 Environment:
 
@@ -506,6 +506,33 @@ Add Owner cloud QA pass - 2026-10-08:
   - Published CloudFront dashboard showed both units, recalculated metrics, activity, contact, and notes.
 - Console warning found and fixed:
   - `DialogOverlay` now forwards the Radix ref instead of triggering the React `SlotClone` warning.
+
+Configure Agent cloud QA pass - 2026-10-19:
+
+- Implementation commit: `dc8c176007840a2c51927dc2801eecb418d4f785`.
+- Agent-scope fix commit: `04c033322875c48aa9eff117fd6cdb19138ea4d8`.
+- GitHub Actions `Build`: pass.
+  - Run: `https://github.com/ranpaco/habitum/actions/runs/39316718783`.
+- GitHub Actions `Deploy Dev`: pass.
+  - Run: `https://github.com/ranpaco/habitum/actions/runs/39316718947`.
+- Community: `com_ded6c2e2-74ae-484b-8962-82354c9a8118`.
+- Knowledge source preservation: pass.
+  - Existing `hoa-regulations.pdf` remained ready after saving manual rules.
+  - `Manual agent rules` was added as a second ready source.
+- Rules and suggested questions persistence: pass.
+  - Fake package-office rules and four dashboard shortcuts persisted after closing and reopening the dialog.
+  - Duplicate suggested questions were rejected before submission.
+- Agent grounding: pass.
+  - Package pickup hours and photo-ID requirement returned a high-confidence answer.
+  - The answer cited `Manual agent rules` and did not require human review.
+- Dashboard synchronization: pass.
+  - Source count, question shortcuts, and `agent_configuration_updated` activity refreshed without a page reload.
+- Responsive browser validation: pass.
+  - Desktop and 390x844 dialog layouts rendered without horizontal overflow.
+  - Cloud browser console contained no errors.
+- Issue found and fixed:
+  - The first package question was incorrectly classified as out of scope.
+  - Package, delivery, and mail vocabulary was added to the supported operations scope and the cloud QA question then passed.
 
 Issues found and fixed:
 
