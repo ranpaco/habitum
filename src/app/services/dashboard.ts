@@ -1,6 +1,8 @@
 import { apiRequest } from "./apiClient";
 import {
   AgentAskResponse,
+  AgentConfigurationInput,
+  AgentConfigurationResponse,
   CreateOwnerInput,
   CreateOwnerResponse,
   DashboardData,
@@ -30,5 +32,15 @@ export function createCommunityOwner(communityId: string, owner: CreateOwnerInpu
   return apiRequest<CreateOwnerResponse>(`/api/communities/${communityId}/units`, {
     method: "POST",
     body: JSON.stringify(owner),
+  });
+}
+
+export function updateCommunityAgentConfiguration(
+  communityId: string,
+  configuration: AgentConfigurationInput,
+) {
+  return apiRequest<AgentConfigurationResponse>(`/api/communities/${communityId}/agent/rules`, {
+    method: "PATCH",
+    body: JSON.stringify(configuration),
   });
 }

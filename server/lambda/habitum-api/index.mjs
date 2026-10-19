@@ -17,6 +17,12 @@ const MAX_SYNC_OCR_SIZE_BYTES = 5 * 1024 * 1024;
 const MAX_KNOWLEDGE_DOCUMENTS = 6;
 const MAX_KNOWLEDGE_CHUNKS = 24;
 const KNOWLEDGE_CHUNK_SIZE = 900;
+const DEFAULT_AGENT_QUESTIONS = [
+  "Puedo tener mascotas?",
+  "Como puedo reservar el salon?",
+  "Que dice el reglamento sobre mascotas?",
+  "Cuales son las normas de ruido?",
+];
 const ALLOWED_EXTENSIONS = new Set(["xlsx", "xls", "csv", "pdf", "jpg", "jpeg", "png"]);
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
@@ -108,6 +114,11 @@ export async function handler(event) {
     const paymentsMatch = path.match(/^\/api\/communities\/([^/]+)\/payments$/);
     if (method === "POST" && paymentsMatch) {
       return recordPayment(paymentsMatch[1], parseBody(event));
+    }
+
+    const agentRulesMatch = path.match(/^\/api\/communities\/([^/]+)\/agent\/rules$/);
+    if (method === "PATCH" && agentRulesMatch) {
+      return updateAgentConfiguration(agentRulesMatch[1], parseBody(event));
     }
 
     const agentAskMatch = path.match(/^\/api\/communities\/([^/]+)\/agent\/ask$/);
@@ -712,6 +723,102 @@ async function getDashboard(communityId) {
   return response(200, buildDashboardPayload(communityId, result.Item));
 }
 
+async function updateAgentConfiguration(communityId, body) {
+  const result = await ddb.send(new GetItemCommand({
+    TableName: env.communitiesTable,
+    Key: { id: { S: communityId } },
+  }));
+
+  if (!result.Item) {
+    return response(404, { error: "community_not_found" });
+  }
+
+  const rulesText = String(body.rulesText || "").trim();
+  const rawQuestions = body.suggestedQuestions;
+
+  if (rulesText.length > 12000) {
+    return response(400, { error: "agent_rules_too_long", maxLength: 12000 });
+  }
+  if (!Array.isArray(rawQuestions)) {
+    return response(400, { error: "agent_questions_required" });
+  }
+
+  const suggestedQuestions = rawQuestions.map((question) => String(question || "").trim()).filter(Boolean);
+  if (suggestedQuestions.length > 4) {
+    return response(400, { error: "too_many_agent_questions", maxQuestions: 4 });
+  }
+  if (suggestedQuestions.some((question) => question.length > 160)) {
+    return response(400, { error: "agent_question_too_long", maxLength: 160 });
+  }
+
+  const uniqueQuestions = new Set(suggestedQuestions.map((question) => question.toLocaleLowerCase()));
+  if (uniqueQuestions.size !== suggestedQuestions.length) {
+    return response(400, { error: "duplicate_agent_questions" });
+  }
+
+  const existingDocuments = parseJsonAttribute(result.Item.knowledgeDocumentsJson?.S, []);
+  const manualFileId = `manual_${communityId}`;
+  const uploadedDocuments = existingDocuments.filter((document) => (
+    document.fileId !== manualFileId && document.kind !== "manual"
+  ));
+  const knowledgeDocuments = rulesText
+    ? [buildManualKnowledgeDocument(communityId, rulesText, "Manual agent rules"), ...uploadedDocuments]
+    : uploadedDocuments;
+  const knowledgeChunks = buildKnowledgeChunks(knowledgeDocuments);
+  const now = new Date().toISOString();
+  const existingActivity = parseJsonAttribute(result.Item.activityJson?.S, []);
+  const activity = [{
+    id: `act_${crypto.randomUUID()}`,
+    type: "agent_configuration_updated",
+    description: `Agent configuration updated with ${knowledgeDocuments.length} knowledge source${knowledgeDocuments.length === 1 ? "" : "s"}`,
+    occurredAt: now,
+  }, ...existingActivity].slice(0, 50);
+  const previousUpdatedAt = result.Item.updatedAt?.S;
+  const expressionAttributeValues = {
+    ":knowledgeDocumentsJson": { S: JSON.stringify(knowledgeDocuments) },
+    ":knowledgeChunksJson": { S: JSON.stringify(knowledgeChunks) },
+    ":agentRulesText": { S: rulesText },
+    ":agentSuggestedQuestionsJson": { S: JSON.stringify(suggestedQuestions) },
+    ":activityJson": { S: JSON.stringify(activity) },
+    ":updatedAt": { S: now },
+  };
+
+  if (previousUpdatedAt) {
+    expressionAttributeValues[":previousUpdatedAt"] = { S: previousUpdatedAt };
+  }
+
+  let updateResult;
+  try {
+    updateResult = await ddb.send(new UpdateItemCommand({
+      TableName: env.communitiesTable,
+      Key: { id: { S: communityId } },
+      UpdateExpression: [
+        "SET knowledgeDocumentsJson = :knowledgeDocumentsJson",
+        "knowledgeChunksJson = :knowledgeChunksJson",
+        "agentRulesText = :agentRulesText",
+        "agentSuggestedQuestionsJson = :agentSuggestedQuestionsJson",
+        "activityJson = :activityJson",
+        "updatedAt = :updatedAt",
+      ].join(", "),
+      ConditionExpression: previousUpdatedAt
+        ? "updatedAt = :previousUpdatedAt"
+        : "attribute_not_exists(updatedAt)",
+      ExpressionAttributeValues: expressionAttributeValues,
+      ReturnValues: "ALL_NEW",
+    }));
+  } catch (error) {
+    if (error?.name === "ConditionalCheckFailedException") {
+      return response(409, { error: "agent_configuration_conflict" });
+    }
+    throw error;
+  }
+
+  return response(200, {
+    agent: buildAgentPayload(updateResult.Attributes),
+    dashboard: buildDashboardPayload(communityId, updateResult.Attributes),
+  });
+}
+
 async function createCommunityUnit(communityId, body) {
   const result = await ddb.send(new GetItemCommand({
     TableName: env.communitiesTable,
@@ -979,16 +1086,33 @@ function buildDashboardPayload(communityId, item) {
       lastUpdatedAt,
     )),
     lastUpdatedAt,
-    agent: {
-      status: parseJsonAttribute(item.knowledgeChunksJson?.S, []).length > 0 ? "ready" : "not_configured",
-      knowledgeDocuments: parseJsonAttribute(item.knowledgeDocumentsJson?.S, []).length,
-      suggestedQuestions: [
-        "Puedo tener mascotas?",
-        "Como puedo reservar el salon?",
-        "Que dice el reglamento sobre mascotas?",
-        "Cuales son las normas de ruido?",
-      ],
-    },
+    agent: buildAgentPayload(item),
+  };
+}
+
+function buildAgentPayload(item) {
+  const documents = parseJsonAttribute(item.knowledgeDocumentsJson?.S, []);
+  const chunks = parseJsonAttribute(item.knowledgeChunksJson?.S, []);
+  const manualDocument = documents.find((document) => document.kind === "manual");
+  const suggestedQuestions = parseJsonAttribute(
+    item.agentSuggestedQuestionsJson?.S,
+    DEFAULT_AGENT_QUESTIONS,
+  );
+
+  return {
+    status: chunks.length > 0 ? "ready" : "not_configured",
+    knowledgeDocuments: documents.length,
+    documents: documents.map((document) => ({
+      id: document.fileId || document.name,
+      name: document.name || "Untitled source",
+      kind: document.kind || "document",
+      status: document.status || (String(document.text || "").trim() ? "ready" : "failed"),
+      lineCount: Number(document.lineCount || 0),
+      averageConfidence: Number(document.averageConfidence || 0),
+      updatedAt: document.updatedAt || item.updatedAt?.S,
+    })),
+    manualRules: item.agentRulesText?.S ?? manualDocument?.text ?? "",
+    suggestedQuestions: Array.isArray(suggestedQuestions) ? suggestedQuestions : DEFAULT_AGENT_QUESTIONS,
   };
 }
 
@@ -1221,8 +1345,10 @@ function buildKnowledgeDocument(file, text, lines) {
 function buildKnowledgeChunks(documents) {
   const chunks = [];
 
-  for (const document of documents.slice(0, MAX_KNOWLEDGE_DOCUMENTS)) {
-    const paragraphs = splitKnowledgeText(document.text);
+  for (const document of documents.slice(0, MAX_KNOWLEDGE_DOCUMENTS + 1)) {
+    const documentText = String(document.text || "").trim();
+    const paragraphs = splitKnowledgeText(documentText);
+    if (paragraphs.length === 0 && documentText) paragraphs.push(documentText);
     let current = "";
     let chunkIndex = 0;
 
@@ -1290,10 +1416,10 @@ function buildManualRulesText(rules) {
     .slice(0, 12000);
 }
 
-function buildManualKnowledgeDocument(communityId, text) {
+function buildManualKnowledgeDocument(communityId, text, name = "Manual onboarding rules") {
   return {
     fileId: `manual_${communityId}`,
-    name: "Manual onboarding rules",
+    name,
     kind: "manual",
     text,
     lineCount: text.split(/\n+/).filter(Boolean).length,

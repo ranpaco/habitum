@@ -1,11 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
 import { Activity, AlertCircle, Bot, Building2, CheckCircle, DollarSign, FileText, RefreshCw, Send, Upload, Users } from "lucide-react";
 import { AddOwnerDialog } from "./dashboard/AddOwnerDialog";
+import { ConfigureAgentDialog } from "./dashboard/ConfigureAgentDialog";
 import { RecordPaymentDialog } from "./dashboard/RecordPaymentDialog";
 import { UnitDirectory } from "./dashboard/UnitDirectory";
 import { fallbackDashboard } from "../mocks/dashboard";
-import { askCommunityAgent, createCommunityOwner, getCommunityDashboard, recordCommunityPayment } from "../services/dashboard";
-import { AgentAskResponse, CreateOwnerInput, DashboardData, DashboardUnit, RecordPaymentInput } from "../types/dashboard";
+import {
+  askCommunityAgent,
+  createCommunityOwner,
+  getCommunityDashboard,
+  recordCommunityPayment,
+  updateCommunityAgentConfiguration,
+} from "../services/dashboard";
+import {
+  AgentAskResponse,
+  AgentConfigurationInput,
+  CreateOwnerInput,
+  DashboardData,
+  DashboardUnit,
+  RecordPaymentInput,
+} from "../types/dashboard";
 
 const COMMUNITY_STORAGE_KEY = "habitum.communityId";
 
@@ -20,6 +34,7 @@ export function Dashboard() {
   const [agentAnswer, setAgentAnswer] = useState<AgentAskResponse | null>(null);
   const [isAskingAgent, setIsAskingAgent] = useState(false);
   const [agentError, setAgentError] = useState<string | null>(null);
+  const [isAgentDialogOpen, setIsAgentDialogOpen] = useState(false);
   const [isOwnerDialogOpen, setIsOwnerDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -69,6 +84,13 @@ export function Dashboard() {
     const result = await createCommunityOwner(activeCommunityId, owner);
     setDashboardData(result.dashboard);
     setActionSuccess(`${result.unit.owner} was added to unit ${result.unit.unit}.`);
+  };
+
+  const configureAgent = async (configuration: AgentConfigurationInput) => {
+    if (!activeCommunityId) throw new Error("Live community required");
+    const result = await updateCommunityAgentConfiguration(activeCommunityId, configuration);
+    setDashboardData(result.dashboard);
+    setActionSuccess("Agent configuration saved and knowledge index refreshed.");
   };
 
   const askAgent = async (question: string) => {
@@ -432,7 +454,13 @@ export function Dashboard() {
               <DollarSign className="w-8 h-8 text-[#00A3BF] mb-3" />
               <p className="font-semibold text-[#1A365D]">Record Payment</p>
             </button>
-            <button className="p-6 bg-gradient-to-br from-[#00A3BF]/10 to-[#1A365D]/10 rounded-xl hover:shadow-lg transition-all border-2 border-transparent hover:border-[#00A3BF]">
+            <button
+              type="button"
+              onClick={() => { setActionSuccess(null); setIsAgentDialogOpen(true); }}
+              disabled={!activeCommunityId}
+              title={activeCommunityId ? "Configure knowledge and agent rules" : "Open a live community to configure the agent"}
+              className="p-6 bg-gradient-to-br from-[#00A3BF]/10 to-[#1A365D]/10 rounded-xl hover:shadow-lg transition-all border-2 border-transparent hover:border-[#00A3BF] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:border-transparent disabled:hover:shadow-none"
+            >
               <Bot className="w-8 h-8 text-[#00A3BF] mb-3" />
               <p className="font-semibold text-[#1A365D]">Configure Agent</p>
             </button>
@@ -449,6 +477,12 @@ export function Dashboard() {
         units={units}
         currency={community.baseCurrency}
         onSubmit={addOwner}
+      />
+      <ConfigureAgentDialog
+        open={isAgentDialogOpen}
+        onOpenChange={setIsAgentDialogOpen}
+        agent={agent}
+        onSubmit={configureAgent}
       />
       <RecordPaymentDialog
         open={isPaymentDialogOpen}

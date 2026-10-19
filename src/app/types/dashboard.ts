@@ -51,6 +51,23 @@ export interface CreateOwnerInput {
   notes?: string;
 }
 
+export type KnowledgeDocumentStatus = "ready" | "pending" | "failed" | string;
+
+export interface DashboardKnowledgeDocument {
+  id: string;
+  name: string;
+  kind: string;
+  status: KnowledgeDocumentStatus;
+  lineCount: number;
+  averageConfidence: number;
+  updatedAt?: string;
+}
+
+export interface AgentConfigurationInput {
+  rulesText: string;
+  suggestedQuestions: string[];
+}
+
 export interface DashboardData {
   community: {
     id: string;
@@ -73,6 +90,8 @@ export interface DashboardData {
   agent: {
     status: string;
     knowledgeDocuments: number;
+    documents?: DashboardKnowledgeDocument[];
+    manualRules?: string;
     suggestedQuestions: string[];
   };
 }
@@ -84,6 +103,11 @@ export interface RecordPaymentResponse {
 
 export interface CreateOwnerResponse {
   unit: DashboardUnit;
+  dashboard: DashboardData;
+}
+
+export interface AgentConfigurationResponse {
+  agent: DashboardData["agent"];
   dashboard: DashboardData;
 }
 

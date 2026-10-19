@@ -242,6 +242,31 @@ Expected:
 - An `owner_added` entry appears in `Recent activity` for the new unit.
 - Refreshing the live dashboard preserves the owner, unit, metrics, contact, notes, and activity.
 
+## Flow 12: Configure Agent
+
+Route: `#dashboard?communityId=<id>`
+
+Expected:
+
+- `Configure Agent` is disabled in sample mode and enabled in live mode.
+- Knowledge Sources lists each available source with name, type, status, and line count.
+- Ready, pending, and failed source counters match the listed documents.
+- An empty community shows a clear no-sources state.
+- Rules & Questions loads the current manual rules and up to four suggested questions.
+- Administrators can add and remove suggested questions.
+- Duplicate suggested questions are rejected without saving.
+- Manual rules accept at most 12,000 characters and each suggested question accepts at most 160.
+- Submit is disabled while configuration is being saved.
+- API errors keep the dialog open and show a recoverable message.
+- Successful save closes the dialog and shows a confirmation banner.
+- Saving rules replaces only the manual source and preserves uploaded documents.
+- Clearing manual rules removes only the manual source.
+- Saving rebuilds the knowledge chunks used by agent answers.
+- Suggested question shortcuts update without a page reload.
+- An `agent_configuration_updated` entry appears in `Recent activity`.
+- Refreshing the dashboard preserves rules, questions, source metadata, and activity.
+- A question covered by the saved manual rules returns a grounded answer with a manual-source citation.
+
 ## Cloud QA Runbook
 
 Environment:
@@ -290,6 +315,10 @@ Manual coverage before a customer-facing demo:
   - Add an owner with a zero-balance unit and verify current status, metrics, detail, and activity.
   - Add an owner with a positive initial balance and verify pending status and outstanding balance.
   - Verify a duplicate unit and a negative balance cannot be submitted.
+  - Open Configure Agent and verify uploaded/manual source metadata and status counts.
+  - Update manual rules and suggested questions, then verify shortcuts and activity without reloading.
+  - Refresh and verify the configuration persists.
+  - Ask a question covered only by the updated manual rules and verify its citation.
 - Responsive:
   - Capture desktop screenshot.
   - Capture mobile screenshot.

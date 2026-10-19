@@ -2,7 +2,7 @@
 
 Este roadmap separa lo que existe hoy, lo que falta para un demo funcional y lo que falta para convertir el sitio en producto SaaS real.
 
-Actualizado: 2026-10-08.
+Actualizado: 2026-10-19.
 
 ## Estado Actual
 
@@ -224,7 +224,7 @@ Fase 2 - Acciones reales:
   - soportar monto, moneda, metodo, fecha y referencia;
   - recalcular saldos y tasa de cobranza;
   - mostrar confirmacion y error recuperable.
-- Hacer funcional `Configure Agent`:
+- Hacer funcional `Configure Agent`: **Completado.**
   - listar fuentes de conocimiento;
   - permitir editar reglas manuales iniciales;
   - mostrar documentos procesados, pendientes y fallidos;
@@ -242,7 +242,7 @@ Fase 3 - Backend/API requerido:
   - `owners`; **Completado con propietario embebido por unidad.**
   - `balances`;
   - `payments`; **Completado para pagos manuales.**
-  - `documents`;
+  - `documents`; **Completado en configuracion del agente.**
   - `activity`; **Iniciado con eventos de pagos manuales.**
   - `lastUpdatedAt`; **Completado.**
 - Crear endpoints:
@@ -250,14 +250,14 @@ Fase 3 - Backend/API requerido:
   - `POST /api/communities/{communityId}/units`; **Completado.**
   - `PATCH /api/communities/{communityId}/units/{unitId}`;
   - `POST /api/communities/{communityId}/payments`; **Completado.**
-  - `GET /api/communities/{communityId}/documents`;
-  - `PATCH /api/communities/{communityId}/agent/rules`;
+  - `GET /api/communities/{communityId}/documents`; **Cubierto por payload del dashboard para el MVP.**
+  - `PATCH /api/communities/{communityId}/agent/rules`; **Completado.**
   - `GET /api/communities/{communityId}/reports/collections`.
 - Persistir auditoria minima:
   - imports confirmados;
   - unidades creadas/editadas; **Creacion completada; edicion pendiente.**
   - pagos registrados; **Completado para pagos manuales.**
-  - reglas/documentos actualizados;
+  - reglas/documentos actualizados; **Completado para reglas manuales.**
   - preguntas al agente marcadas para revision humana.
 
 Fase 4 - UX y calidad:
@@ -283,7 +283,8 @@ Primer slice recomendado:
 - Luego extender el endpoint de dashboard para devolver unidades/propietarios normalizados. **Completado para unidades con propietario embebido.**
 - `Record Payment` conectado y validado localmente. **Completado.**
 - `Add Owner` conectado para crear unidades/propietarios y actualizar metricas sin recargar. **Completado.**
-- Siguiente: hacer funcional `Configure Agent` para administrar fuentes y reglas desde el dashboard.
+- `Configure Agent` conectado para administrar fuentes, reglas y preguntas sugeridas. **Completado.**
+- Siguiente: hacer funcional `View Reports` con cobranza, morosidad y export CSV.
 
 ## Prioridad 3: Agente IA Y Base De Conocimiento
 
