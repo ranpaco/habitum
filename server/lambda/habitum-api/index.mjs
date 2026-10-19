@@ -1544,6 +1544,7 @@ function isCommunityScopedQuestion(question, community) {
     "salon", "reserva", "reservar", "fiesta", "piscina", "gym", "gimnasio", "ascensor", "elevator", "amenity", "amenities",
     "ruido", "musica", "noise", "quiet", "silence", "fumar", "smoke", "smoking",
     "mantenimiento", "filtracion", "reparacion", "averia", "basura", "trash", "garbage", "maintenance", "repair",
+    "paquete", "paquetes", "entrega", "entregas", "correo", "mensajeria", "recepcion", "conserjeria", "package", "packages", "delivery", "deliveries", "mail", "mailroom", "front desk", "concierge",
     "pago", "pagos", "saldo", "deuda", "cuota", "condominio", "cobranza", "mora", "multa", "payment", "payments", "balance", "assessment", "fine",
     "documento", "documentos", "acta", "actas", "document", "documents",
   ];
